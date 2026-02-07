@@ -1,0 +1,71 @@
+{
+    "name": "swg-forge-config",
+    "displayName": "SWG Forge - Configuration",
+    "description": "Shared workspace settings for all SWG Forge extensions",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "SWG Forge",
+            "properties": {
+                "swgForge.serverScriptsPath": {
+                    "type": "string",
+                    "default": "infinity4.0.0/MMOCoreORB/bin/scripts",
+                    "markdownDescription": "Path to server Lua scripts directory, relative to workspace root.\n\nThis folder contains `object/`, `managers/`, and `custom_scripts/`.\n\n**Examples:**\n- `infinity4.0.0/MMOCoreORB/bin/scripts` (Infinity)\n- `Core3/MMOCoreORB/bin/scripts` (standard SWGEmu)"
+                },
+                "swgForge.serverConfPath": {
+                    "type": "string",
+                    "default": "infinity4.0.0/MMOCoreORB/bin/conf",
+                    "markdownDescription": "Path to server configuration directory, relative to workspace root.\n\nContains `config-local.lua` and other server config files."
+                },
+                "swgForge.customScriptsFolder": {
+                    "type": "string",
+                    "default": "custom_scripts",
+                    "markdownDescription": "Name of the custom scripts subfolder inside the server scripts directory.\n\nThis is where all custom Lua work goes. Set to empty string if you put custom code directly in the scripts folder."
+                },
+                "swgForge.tre.workingPath": {
+                    "type": "string",
+                    "default": "tre/working",
+                    "markdownDescription": "Path to the **editable** TRE working directory, relative to workspace root.\n\nThis is the ONLY TRE folder where files are created or modified. All other TRE folders are read-only references."
+                },
+                "swgForge.tre.vanillaPath": {
+                    "type": "string",
+                    "default": "tre/vanilla",
+                    "markdownDescription": "Path to the **read-only** vanilla SOE TRE directory, relative to workspace root.\n\nContains extracted original game assets for reference."
+                },
+                "swgForge.tre.referencePath": {
+                    "type": "string",
+                    "default": "tre/infinity",
+                    "markdownDescription": "Path to the **read-only** server-specific TRE directory, relative to workspace root.\n\nContains extracted server-customized assets. On Infinity this is `tre/infinity`, other servers may use a different name."
+                },
+                "swgForge.tre.exportPath": {
+                    "type": "string",
+                    "default": "tre/export",
+                    "markdownDescription": "Path to the TRE export directory (searchable text files), relative to workspace root.\n\nContains CSV/TXT exports of CRC tables and string files."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

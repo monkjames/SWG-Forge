@@ -4,120 +4,210 @@ VSCode extensions for Star Wars Galaxies Emulator (SWGEmu) development. Visual e
 
 ## Extensions
 
-| Package | Description |
-|---------|-------------|
-| **stf-editor** | Visual editor for string table files (.stf) |
-| **crc-editor** | Editor for CRC string table files |
-| **iff-editor** | Template-driven visual editor for IFF files |
-| **datatable-editor** | Spreadsheet-style editor for datatable IFF files |
-| **dds-editor** | View and edit DDS textures (DXT1/DXT5) |
-| **appearance-chain** | Edit SWG appearance chains with inline IFF trees |
-| **art-workshop** | Generate in-game art objects from DDS textures |
-| **crafting-workshop** | Simulate and design craftable items |
-| **mount-wizard** | Automate making creatures/speeders into mounts |
-| **tre-builder** | Build TRE archives from tre/working folder |
-| **trn-viewer** | View and query terrain (.trn) files |
+| Extension | Description |
+|-----------|-------------|
+| **SWG Forge Config** | Shared workspace settings for all extensions |
+| **STF Editor** | Visual editor for string table files (.stf) |
+| **CRC Editor** | Editor for CRC string table files |
+| **IFF Editor** | Template-driven visual editor for IFF files |
+| **Datatable Editor** | Spreadsheet-style editor for datatable IFF files |
+| **DDS Editor** | View and edit DDS textures (DXT1/DXT5) |
+| **Appearance Chain** | Edit SWG appearance chains with inline IFF trees |
+| **Art Workshop** | Generate in-game art objects from DDS textures |
+| **Crafting Workshop** | Simulate and design craftable items |
+| **Mount Wizard** | Automate making creatures/speeders into mounts |
+| **TRE Builder** | Build TRE archives from working folder |
+| **TRN Viewer** | View and query terrain (.trn) files |
 
-## Prerequisites
+---
 
-This extension suite is designed for use with the SWGEmu Infinity workspace which provides:
+## Quick Start
+
+```bash
+git clone git@github.com:monkjames/SWG-Forge.git
+cd SWG-Forge
+npm install
+npm run build
+node scripts/deploy-ssh.js      # if using VSCode SSH Remote
+```
+
+Then reload VSCode: `Ctrl+Shift+P` > **Developer: Reload Window**
+
+---
+
+## Workspace Setup
+
+SWG Forge expects your workspace to have a specific folder layout. The exact folder names are **fully configurable** (see [Configuration](#configuration)), but the structure should look like this:
+
+```
+your-workspace/
+|
++-- SWG-Forge/                          # This repo (extension source code)
+|
++-- <server-code>/                      # Your SWGEmu server code
+|   +-- MMOCoreORB/
+|       +-- bin/
+|           +-- scripts/                # Lua scripts root
+|           |   +-- object/             # Vanilla object templates
+|           |   +-- managers/           # Core managers (pet_manager, etc.)
+|           |   +-- custom_scripts/     # Your custom Lua work
+|           +-- conf/                   # Server config (config-local.lua)
+|
++-- <tre-working>/                      # YOUR EDITABLE TRE FILES
+|   +-- object/                         # IFF object templates
+|   +-- string/en/                      # STF string files
+|   +-- appearance/                     # APT/LOD/MSH appearance files
+|   +-- texture/                        # DDS textures
+|   +-- shader/                         # SHT shader files
+|   +-- misc/                           # CRC tables, datatables
+|
++-- <tre-vanilla>/                      # Read-only: vanilla SOE game assets
+|   +-- (same structure as above)
+|
++-- <tre-reference>/                    # Read-only: your server's custom assets
+    +-- (same structure as above)
+```
+
+> **Key concept:** The TRE working directory is the ONLY folder where files get created or modified. Vanilla and reference TRE folders are read-only - extensions use them to look up original game data.
+
+### Example: Infinity Server (defaults, no config needed)
 
 ```
 workspace/
-├── swgemu-vscode/              # This repo
-├── infinity4.0.0/              # Active server codebase
-├── tre/
-│   ├── working/                # Editable TRE files (client assets)
-│   ├── vanilla/                # Reference vanilla SOE assets (read-only)
-│   └── infinity/               # Reference Infinity assets (read-only)
-└── tre_original/               # Compressed TRE archives (read-only)
++-- SWG-Forge/
++-- infinity4.0.0/MMOCoreORB/bin/scripts/
++-- tre/working/
++-- tre/vanilla/
++-- tre/infinity/
 ```
 
-The extensions read/write files from `tre/working/` and interact with the server-side Lua scripts in `infinity4.0.0/`.
-
-## Repository Structure
+### Example: Standard Core3 Server
 
 ```
-swgemu-vscode/
-├── packages/
-│   ├── core/                   # Shared library (IFF, CRC, DDS codecs)
-│   ├── stf-editor/             # String table editor
-│   ├── crc-editor/             # CRC table editor
-│   ├── iff-editor/             # IFF file editor
-│   ├── datatable-editor/       # Datatable editor
-│   ├── dds-editor/             # DDS texture editor
-│   ├── appearance-chain/       # Appearance chain editor
-│   ├── art-workshop/           # Art object generator
-│   ├── crafting-workshop/      # Crafting simulator
-│   ├── mount-wizard/           # Mount creation wizard
-│   ├── tre-builder/            # TRE archive builder
-│   └── trn-viewer/             # Terrain viewer
-├── scripts/
-│   ├── build-all.js            # Build all extensions to dist/
-│   ├── deploy-ssh.js           # Deploy to SSH remote VSCode
-│   └── clean.js                # Clean build artifacts
-├── dist/                       # Built VSIX files (git-ignored)
-├── package.json                # npm workspaces root
-└── tsconfig.base.json          # Shared TypeScript config
+workspace/
++-- SWG-Forge/
++-- Core3/MMOCoreORB/bin/scripts/
++-- tre/working/
++-- tre/vanilla/
 ```
+
+Add to `.vscode/settings.json`:
+```json
+{
+    "swgForge.serverScriptsPath": "Core3/MMOCoreORB/bin/scripts",
+    "swgForge.serverConfPath": "Core3/MMOCoreORB/bin/conf"
+}
+```
+
+### Example: Completely Custom Layout
+
+```
+workspace/
++-- SWG-Forge/
++-- my-server/MMOCoreORB/bin/scripts/
++-- clientdata/editable/
++-- clientdata/vanilla/
++-- clientdata/server-custom/
+```
+
+```json
+{
+    "swgForge.serverScriptsPath": "my-server/MMOCoreORB/bin/scripts",
+    "swgForge.serverConfPath": "my-server/MMOCoreORB/bin/conf",
+    "swgForge.tre.workingPath": "clientdata/editable",
+    "swgForge.tre.vanillaPath": "clientdata/vanilla",
+    "swgForge.tre.referencePath": "clientdata/server-custom"
+}
+```
+
+---
+
+## Configuration
+
+All settings live in `.vscode/settings.json` at the workspace root. You can also change them through the VSCode Settings UI by searching for **"SWG Forge"**.
+
+To see your current resolved paths: `Ctrl+Shift+P` > **SWG Forge: Show Config**
+
+### Settings Reference
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `swgForge.serverScriptsPath` | `infinity4.0.0/MMOCoreORB/bin/scripts` | Server Lua scripts directory |
+| `swgForge.serverConfPath` | `infinity4.0.0/MMOCoreORB/bin/conf` | Server configuration directory |
+| `swgForge.customScriptsFolder` | `custom_scripts` | Custom scripts subfolder inside scripts directory |
+| `swgForge.tre.workingPath` | `tre/working` | Editable TRE files (the only writable TRE folder) |
+| `swgForge.tre.vanillaPath` | `tre/vanilla` | Read-only vanilla SOE TRE assets |
+| `swgForge.tre.referencePath` | `tre/infinity` | Read-only server-specific TRE assets |
+| `swgForge.tre.exportPath` | `tre/export` | TRE text export directory (CSV/TXT) |
+
+All paths are **relative to the workspace root**. Do not use absolute paths.
+
+---
 
 ## Building
 
 ```bash
-# Install dependencies (run from repo root)
-npm install
-
-# Build all extensions
-npm run build
-
-# Build a single extension
-node scripts/build-all.js stf-editor
-
-# Deploy to SSH remote (builds + installs)
-node scripts/deploy-ssh.js --build
-
-# Deploy specific extension
-node scripts/deploy-ssh.js --build stf-editor
-
-# Clean all build artifacts
-npm run clean
+npm install                              # Install dependencies
+npm run build                            # Build all extensions to dist/
+node scripts/build-all.js stf-editor     # Build one extension
+npm run clean                            # Clean build artifacts
 ```
-
-Built VSIX files are placed in `dist/`.
 
 ## Deploying to SSH Remote
 
-The primary use case is VSCode connected to a remote server via SSH. After building:
+The primary use case is VSCode connected to a remote server via SSH.
 
 ```bash
-# Option 1: Build and deploy in one step
-node scripts/deploy-ssh.js --build
-
-# Option 2: Deploy pre-built VSIX files
-npm run build
-npm run deploy
+node scripts/deploy-ssh.js --build                # Build + deploy all
+node scripts/deploy-ssh.js --build stf-editor     # Build + deploy one
+npm run deploy                                     # Deploy pre-built only
 ```
 
-Then reload the VSCode window: `Ctrl+Shift+P` -> "Reload Window"
+After deploying, reload VSCode: `Ctrl+Shift+P` > **Developer: Reload Window**
+
+---
+
+## Repository Structure
+
+```
+SWG-Forge/
++-- packages/
+|   +-- config/                 # Shared workspace configuration settings
+|   +-- core/                   # Shared library (IFF, CRC, DDS codecs)
+|   +-- stf-editor/             # String table editor
+|   +-- crc-editor/             # CRC table editor
+|   +-- iff-editor/             # IFF file editor
+|   +-- datatable-editor/       # Datatable editor
+|   +-- dds-editor/             # DDS texture editor
+|   +-- appearance-chain/       # Appearance chain editor
+|   +-- art-workshop/           # Art object generator
+|   +-- crafting-workshop/      # Crafting simulator
+|   +-- mount-wizard/           # Mount creation wizard
+|   +-- tre-builder/            # TRE archive builder
+|   +-- trn-viewer/             # Terrain viewer
++-- scripts/
+|   +-- build-all.js            # Build all extensions to dist/
+|   +-- deploy-ssh.js           # Deploy to SSH remote VSCode
+|   +-- clean.js                # Clean build artifacts
++-- dist/                       # Built VSIX files (git-ignored)
++-- package.json                # npm workspaces root
++-- tsconfig.base.json          # Shared TypeScript config
+```
 
 ## Shared Core Library
 
-The `@swgemu/core` package provides shared parsers and codecs used by multiple extensions:
+The `@swgemu/core` package provides shared parsers and codecs:
 
 - **IFF Parser** - Parse/serialize SWG Interchange File Format binary files
 - **CRC-32** - SWG MPEG-2 CRC-32 calculation (polynomial 0x04C11DB7)
 - **CRC Table** - Parse/serialize CSTB (CRC String Table) files
 - **DDS Codec** - DXT1/DXT5 texture decode/encode with mipmap generation
 
-Extensions import from `@swgemu/core`:
-
 ```typescript
 import { parseIFF, serializeIFF, calculateCRC, decodeDDS } from '@swgemu/core';
 ```
 
 ## Development
-
-To work on an extension:
 
 ```bash
 npm install                     # Install all workspace deps
