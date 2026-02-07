@@ -1,0 +1,100 @@
+{
+    "name": "swg-tre-builder",
+    "displayName": "SWG TRE Builder",
+    "description": "Build TRE archives from tre/working folder",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "workspaceContains:tre/working"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "tre-builder",
+                    "title": "TRE Builder",
+                    "icon": "$(package)"
+                }
+            ]
+        },
+        "views": {
+            "tre-builder": [
+                {
+                    "id": "treBuilderFiles",
+                    "name": "Working Files",
+                    "type": "webview"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "treBuilder.build",
+                "title": "Build TRE",
+                "icon": "$(tools)"
+            },
+            {
+                "command": "treBuilder.refresh",
+                "title": "Refresh File List",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "treBuilder.validate",
+                "title": "Run Validations",
+                "icon": "$(check)"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "treBuilder.build",
+                    "when": "view == treBuilderFiles",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "treBuilder.refresh",
+                    "when": "view == treBuilderFiles",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "treBuilder.validate",
+                    "when": "view == treBuilderFiles",
+                    "group": "navigation@3"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "TRE Builder",
+            "properties": {
+                "treBuilder.outputPath": {
+                    "type": "string",
+                    "default": "tre4/infinity_wicked_special.tre",
+                    "description": "Output path for built TRE file (relative to workspace)"
+                },
+                "treBuilder.workingFolder": {
+                    "type": "string",
+                    "default": "tre/working",
+                    "description": "Source folder containing files to pack (relative to workspace)"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

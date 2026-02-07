@@ -1,0 +1,15 @@
+{
+    "name": "@swgemu/core",
+    "version": "1.0.0",
+    "description": "Shared libraries for SWGEmu VSCode extensions (IFF, CRC, DDS, STF)",
+    "main": "out/index.js",
+    "types": "out/index.d.ts",
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "typescript": "^5.0.0"
+    }
+}

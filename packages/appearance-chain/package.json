@@ -1,0 +1,82 @@
+{
+    "name": "appearance-chain-editor",
+    "displayName": "SWG Appearance Chain Editor",
+    "description": "Edit SWG appearance chains with inline IFF trees, template pills, and bulk Save All",
+    "version": "2.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:swgemu.analyzeAppearanceChain"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "swgemu.analyzeAppearanceChain",
+                "title": "Analyze Appearance Chain",
+                "category": "SWG"
+            }
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "when": "resourceExtname == .apt",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .sat",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .lod",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .lmg",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .msh",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .mgn",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .sht",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .iff",
+                    "command": "swgemu.analyzeAppearanceChain",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

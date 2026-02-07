@@ -1,0 +1,71 @@
+{
+    "name": "mount-wizard",
+    "displayName": "SWGEmu Mount Wizard",
+    "description": "Automate making creatures and speeders into tameable mounts",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:mountWizard.addMount",
+        "onCommand:mountWizard.validateMount"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "mountWizard.addMount",
+                "title": "Add Mount",
+                "category": "SWGEmu"
+            },
+            {
+                "command": "mountWizard.validateMount",
+                "title": "Validate Mount",
+                "category": "SWGEmu"
+            }
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "when": "resourceExtname == .lua && resourcePath =~ /mobile/",
+                    "command": "mountWizard.addMount",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .lua && resourcePath =~ /mobile/",
+                    "command": "mountWizard.validateMount",
+                    "group": "navigation"
+                }
+            ],
+            "editor/context": [
+                {
+                    "when": "resourceExtname == .lua && resourcePath =~ /mobile/",
+                    "command": "mountWizard.addMount",
+                    "group": "navigation"
+                },
+                {
+                    "when": "resourceExtname == .lua && resourcePath =~ /mobile/",
+                    "command": "mountWizard.validateMount",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

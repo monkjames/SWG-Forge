@@ -1,0 +1,44 @@
+{
+    "name": "iff-editor",
+    "displayName": "SWG IFF Editor",
+    "description": "Template-driven visual editor for SWG IFF files",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "iffEditor.iffFile",
+                "displayName": "IFF Editor",
+                "selector": [
+                    {
+                        "filenamePattern": "*.iff"
+                    }
+                ],
+                "priority": "default"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@types/minimatch": "^5.1.2",
+        "minimatch": "^9.0.0",
+        "@swgemu/core": "file:../core"
+    }
+}

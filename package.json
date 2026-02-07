@@ -1,0 +1,22 @@
+{
+    "name": "swg-forge",
+    "version": "1.0.0",
+    "private": true,
+    "description": "SWG Forge - VSCode extensions for Star Wars Galaxies development",
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "compile": "npm run compile --workspaces",
+        "compile:core": "npm run compile -w packages/core",
+        "watch": "npm run watch --workspaces --if-present",
+        "build": "node scripts/build-all.js",
+        "deploy": "node scripts/deploy-ssh.js",
+        "clean": "node scripts/clean.js"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

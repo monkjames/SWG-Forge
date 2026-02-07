@@ -1,0 +1,41 @@
+{
+    "name": "dds-editor",
+    "displayName": "SWG DDS Texture Editor",
+    "description": "View and edit DDS textures (DXT1/DXT5) for Star Wars Galaxies",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "ddsEditor.ddsFile",
+                "displayName": "DDS Texture Editor",
+                "selector": [
+                    {
+                        "filenamePattern": "*.dds"
+                    }
+                ],
+                "priority": "default"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

@@ -1,0 +1,39 @@
+{
+    "name": "art-workshop",
+    "displayName": "SWGEmu Art Workshop",
+    "description": "Generate in-game art objects (paintings, rugs, banners, tapestries) from DDS texture files",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:artWorkshop.open"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "artWorkshop.open",
+                "title": "Art Workshop",
+                "category": "SWGEmu"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}
