@@ -1,0 +1,53 @@
+{
+    "name": "acm-editor",
+    "displayName": "SWGEmu Asset Customization Manager",
+    "description": "Visual editor for SWG Asset Customization Manager files - browse palettes, manage asset customization, and register new objects",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:acmEditor.open",
+        "onCommand:acmEditor.addAssets"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "acmEditor.open",
+                "title": "Open ACM Editor",
+                "category": "SWGEmu"
+            },
+            {
+                "command": "acmEditor.addAssets",
+                "title": "Add Assets to ACM",
+                "category": "SWGEmu"
+            }
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "when": "resourceFilename =~ /asset_customization_manager.*\\.iff$/",
+                    "command": "acmEditor.open",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

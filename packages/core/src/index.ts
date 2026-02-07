@@ -5,3 +5,11 @@ export { parseCRCTable, serializeCRCTable, addCRCEntries, hasCRCEntry } from './
 export type { CRCEntry, CRCTable } from './crc-table';
 export { decodeDDS, encodeDDS, getDDSInfo } from './dds';
 export type { DDSInfo, DDSImage } from './dds';
+export { parseACM, serializeACM, createMinimalACM, acmCRC, findAssetByCRC, findAssetByPath, getUidxEntry, getLidxEntry, resolveCustomization, addPalette, addVariable, addCidxEntry, addMinimalUidxEntry, addAssetLikeExisting, getACMSummary } from './acm';
+export type { ACMData, ACMPalette, ACMVariable, ACMAssetEntry, ACMCidxEntry, ACMLidxEntry, ACMCustomizationVar, ACMSummary } from './acm';
+export { parsePalette, serializePalette, colorToHex, colorToRGB, createPaletteFromHex } from './pal';
+export type { PaletteData, PaletteColor } from './pal';
+export { parseSTF, serializeSTF, addSTFEntries } from './stf';
+export type { STFData, StringEntry } from './stf';
+export { cloneIFFWithReplacements, getArmorIFFReplacements, getSchematicIFFReplacements, getLootSchematicIFFReplacements } from './iff-clone';
+export type { StringReplacement } from './iff-clone';
