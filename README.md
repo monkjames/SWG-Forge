@@ -2,7 +2,7 @@
 
 VSCode extensions for Star Wars Galaxies Emulator (SWGEmu) development. Visual editors and tools for SWG binary file formats: IFF, STF, DDS, CRC tables, TRE archives, and more.
 
-> **Acknowledgment:** This project would not have been possible without the pioneering work of **Sytner** and [SIE (SWG Information Extractor)](https://github.com/Sytner/SIE). SIE's deep documentation and tooling for SWG's binary formats laid the groundwork that made building these editors a reality. Thank you, Sytner.
+> **Acknowledgment:** This project would not have been possible without the pioneering work of **Sytner** and [SIE (SWG Information Extractor)](https://modthegalaxy.com/index.php?resources/sie.1/). SIE's deep documentation and tooling for SWG's binary formats laid the groundwork that made building these editors a reality. Thank you, Sytner.
 
 ## Extensions
 
