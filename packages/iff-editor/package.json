@@ -18,9 +18,28 @@
                 "viewType": "iffEditor.iffFile",
                 "displayName": "IFF Editor",
                 "selector": [
-                    {
-                        "filenamePattern": "*.iff"
-                    }
+                    { "filenamePattern": "*.iff" },
+                    { "filenamePattern": "*.apt" },
+                    { "filenamePattern": "*.sat" },
+                    { "filenamePattern": "*.lod" },
+                    { "filenamePattern": "*.msh" },
+                    { "filenamePattern": "*.mgn" },
+                    { "filenamePattern": "*.lmg" },
+                    { "filenamePattern": "*.sht" },
+                    { "filenamePattern": "*.ans" },
+                    { "filenamePattern": "*.skt" },
+                    { "filenamePattern": "*.prt" },
+                    { "filenamePattern": "*.pob" },
+                    { "filenamePattern": "*.flr" },
+                    { "filenamePattern": "*.cmp" },
+                    { "filenamePattern": "*.spr" },
+                    { "filenamePattern": "*.lat" },
+                    { "filenamePattern": "*.lsb" },
+                    { "filenamePattern": "*.ltn" },
+                    { "filenamePattern": "*.pln" },
+                    { "filenamePattern": "*.ssa" },
+                    { "filenamePattern": "*.swh" },
+                    { "filenamePattern": "*.ash" }
                 ],
                 "priority": "default"
             }

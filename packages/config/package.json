@@ -15,6 +15,18 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "swgForge.open",
+                "title": "Forge",
+                "category": "SWG"
+            },
+            {
+                "command": "swgForge.showConfig",
+                "title": "Forge: Show Config",
+                "category": "SWG"
+            }
+        ],
         "configuration": {
             "title": "SWG Forge",
             "properties": {
@@ -47,11 +59,6 @@
                     "type": "string",
                     "default": "tre/infinity",
                     "markdownDescription": "Path to the **read-only** server-specific TRE directory, relative to workspace root.\n\nContains extracted server-customized assets. On Infinity this is `tre/infinity`, other servers may use a different name."
-                },
-                "swgForge.tre.exportPath": {
-                    "type": "string",
-                    "default": "tre/export",
-                    "markdownDescription": "Path to the TRE export directory (searchable text files), relative to workspace root.\n\nContains CSV/TXT exports of CRC tables and string files."
                 }
             }
         }

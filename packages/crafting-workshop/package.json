@@ -1,6 +1,6 @@
 {
     "name": "crafting-workshop",
-    "displayName": "SWGEmu Crafting Workshop",
+    "displayName": "SWG Crafting Workshop",
     "description": "Simulate and design craftable items for SWGEmu",
     "version": "1.2.0",
     "publisher": "swgemu",
@@ -20,12 +20,12 @@
             {
                 "command": "craftingWorkshop.open",
                 "title": "Open Crafting Workshop",
-                "category": "SWGEmu"
+                "category": "SWG"
             },
             {
                 "command": "craftingWorkshop.openFromSchematic",
                 "title": "Open in Crafting Workshop",
-                "category": "SWGEmu"
+                "category": "SWG"
             }
         ],
         "menus": {

@@ -1,6 +1,6 @@
 {
     "name": "acm-editor",
-    "displayName": "SWGEmu Asset Customization Manager",
+    "displayName": "SWG ACM Editor",
     "description": "Visual editor for SWG Asset Customization Manager files - browse palettes, manage asset customization, and register new objects",
     "version": "1.0.0",
     "publisher": "swgemu",
@@ -20,12 +20,12 @@
             {
                 "command": "acmEditor.open",
                 "title": "Open ACM Editor",
-                "category": "SWGEmu"
+                "category": "SWG"
             },
             {
                 "command": "acmEditor.addAssets",
                 "title": "Add Assets to ACM",
-                "category": "SWGEmu"
+                "category": "SWG"
             }
         ],
         "menus": {

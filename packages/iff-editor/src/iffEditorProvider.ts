@@ -310,6 +310,37 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                     this.handleFixRemoveIff(document, e.slotIndex, webviewPanel);
                     break;
 
+                case 'hideField': {
+                    const rootType = this.getRootFormType(document);
+                    const hidden = this.getHiddenFields(rootType);
+                    if (!hidden.includes(e.fieldKey)) {
+                        hidden.push(e.fieldKey);
+                        await this.setHiddenFields(rootType, hidden);
+                    }
+                    webviewPanel.webview.postMessage({ type: 'hiddenFieldsUpdated', hiddenFields: hidden });
+                    break;
+                }
+
+                case 'showField': {
+                    const rootType2 = this.getRootFormType(document);
+                    const hidden2 = this.getHiddenFields(rootType2);
+                    const idx = hidden2.indexOf(e.fieldKey);
+                    if (idx >= 0) {
+                        hidden2.splice(idx, 1);
+                        await this.setHiddenFields(rootType2, hidden2);
+                    }
+                    // Re-send full data so tree re-renders with the restored node
+                    sendData();
+                    break;
+                }
+
+                case 'showAllFields': {
+                    const rootType3 = this.getRootFormType(document);
+                    await this.setHiddenFields(rootType3, []);
+                    sendData();
+                    break;
+                }
+
                 case 'fixResourceType':
                     // Change resource type to fix experimental property mismatch (legacy)
                     this.handleFixResourceType(document, e.slotIndex, e.resourceType, webviewPanel);
@@ -372,6 +403,24 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         }
     }
 
+    private getRootFormType(document: IFFEditorDocument): string {
+        const root = document.iffDoc.root;
+        if (root.type === 'form' && root.formName) {
+            return root.formName;
+        }
+        return 'UNKNOWN';
+    }
+
+    private getHiddenFields(rootFormType: string): string[] {
+        const key = `iff-hidden-${rootFormType}`;
+        return this.context.globalState.get<string[]>(key) || [];
+    }
+
+    private async setHiddenFields(rootFormType: string, hidden: string[]): Promise<void> {
+        const key = `iff-hidden-${rootFormType}`;
+        await this.context.globalState.update(key, hidden.length > 0 ? hidden : undefined);
+    }
+
     private serializeForWebview(document: IFFEditorDocument): any {
         const { root, properties, derivation } = document.iffDoc;
 
@@ -391,6 +440,10 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         const isEditable = this.isInWorkingFolder(filePath);
         const workingFolderPath = this.getWorkingFolderPath(filePath);
 
+        // Hidden fields for this file type
+        const rootFormType = this.getRootFormType(document);
+        const hiddenFields = this.getHiddenFields(rootFormType);
+
         return {
             tree,
             properties: props,
@@ -399,6 +452,9 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             // Editability info
             isEditable,
             workingFolderPath,
+            // Hidden fields
+            rootFormType,
+            hiddenFields,
             // Schematic-specific data
             isSchematic: document.isSchematic,
             schematicData: document.schematicData,
@@ -1622,6 +1678,122 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             color: var(--vscode-list-activeSelectionForeground);
         }
 
+        .tree-hide-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--vscode-descriptionForeground);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+            margin-left: auto;
+            opacity: 0.5;
+            line-height: 1;
+        }
+
+        .tree-header:hover .tree-hide-btn {
+            display: inline-block;
+        }
+
+        .tree-hide-btn:hover {
+            opacity: 1;
+            color: var(--vscode-errorForeground, #f44747);
+        }
+
+        .hidden-fields-bar {
+            padding: 8px 12px;
+            margin-top: 12px;
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .hidden-fields-toggle {
+            cursor: pointer;
+            color: var(--vscode-descriptionForeground);
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hidden-fields-toggle:hover {
+            color: var(--vscode-foreground);
+        }
+
+        .hidden-fields-toggle .arrow {
+            font-size: 10px;
+            transition: transform 0.15s;
+        }
+
+        .hidden-fields-toggle .arrow.expanded {
+            transform: rotate(90deg);
+        }
+
+        .hidden-fields-list {
+            display: none;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .hidden-fields-list.expanded {
+            display: flex;
+        }
+
+        .hidden-fields-list.collapsed {
+            display: none;
+        }
+
+        .hidden-field-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .hidden-field-item:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        .hidden-field-name {
+            font-family: var(--vscode-editor-font-family), monospace;
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .hidden-field-restore {
+            background: var(--vscode-button-secondaryBackground, #333);
+            color: var(--vscode-button-secondaryForeground, #ccc);
+            border: none;
+            padding: 2px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .hidden-field-restore:hover {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .show-all-btn {
+            margin-top: 6px;
+            background: none;
+            border: none;
+            color: var(--vscode-textLink-foreground, #3794ff);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 0;
+        }
+
+        .show-all-btn:hover {
+            text-decoration: underline;
+        }
+
         .field-input.modified {
             border-color: var(--vscode-inputValidation-warningBorder, #cca700) !important;
             background: var(--vscode-inputValidation-warningBackground, rgba(204, 167, 0, 0.1)) !important;
@@ -2122,6 +2294,13 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         <div class="main-container">
             <div class="tree-panel">
                 <div id="tree" class="tree"></div>
+                <div id="hidden-fields-bar" class="hidden-fields-bar" style="display:none">
+                    <div class="hidden-fields-toggle" id="hidden-fields-toggle">
+                        <span class="arrow" id="hidden-arrow">&#9654;</span>
+                        <span id="hidden-count">0 hidden fields</span>
+                    </div>
+                    <div class="hidden-fields-list collapsed" id="hidden-fields-list"></div>
+                </div>
             </div>
             <div id="detail-panel" class="detail-panel">
                 <div class="detail-header">
@@ -2226,6 +2405,86 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
     <script>
         const vscode = acquireVsCodeApi();
         let currentData = null;
+        let hiddenFields = [];
+        let hiddenBarExpanded = false;
+
+        function getFieldKey(node) {
+            if (node.type === 'form') {
+                return 'FORM:' + node.formName;
+            }
+            if (node.tag === 'XXXX' && node.propertyName) {
+                return 'XXXX:' + node.propertyName;
+            }
+            return node.tag;
+        }
+
+        function getFieldLabel(key) {
+            if (key.startsWith('FORM:')) return 'FORM ' + key.substring(5);
+            if (key.startsWith('XXXX:')) return key.substring(5);
+            return key;
+        }
+
+        function hideField(fieldKey) {
+            vscode.postMessage({ type: 'hideField', fieldKey: fieldKey });
+        }
+
+        function showField(fieldKey) {
+            vscode.postMessage({ type: 'showField', fieldKey: fieldKey });
+        }
+
+        function showAllFields() {
+            vscode.postMessage({ type: 'showAllFields' });
+        }
+
+        function updateHiddenBar() {
+            const bar = document.getElementById('hidden-fields-bar');
+            const count = hiddenFields.length;
+            if (count === 0) {
+                bar.style.display = 'none';
+                return;
+            }
+            bar.style.display = 'block';
+            document.getElementById('hidden-count').textContent = count + ' hidden field' + (count !== 1 ? 's' : '');
+
+            const list = document.getElementById('hidden-fields-list');
+            list.innerHTML = hiddenFields.map(function(key) {
+                return '<div class="hidden-field-item">' +
+                    '<span class="hidden-field-name">' + escapeHtml(getFieldLabel(key)) + '</span>' +
+                    '<button class="hidden-field-restore" data-key="' + escapeHtml(key) + '">Restore</button>' +
+                    '</div>';
+            }).join('') +
+            '<button class="show-all-btn" id="show-all-btn">Restore all</button>';
+
+            // Attach restore handlers
+            list.querySelectorAll('.hidden-field-restore').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showField(btn.dataset.key);
+                });
+            });
+            var showAllBtn = document.getElementById('show-all-btn');
+            if (showAllBtn) {
+                showAllBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showAllFields();
+                });
+            }
+        }
+
+        document.getElementById('hidden-fields-toggle').addEventListener('click', function() {
+            hiddenBarExpanded = !hiddenBarExpanded;
+            var list = document.getElementById('hidden-fields-list');
+            var arrow = document.getElementById('hidden-arrow');
+            if (hiddenBarExpanded) {
+                list.classList.remove('collapsed');
+                list.classList.add('expanded');
+                arrow.classList.add('expanded');
+            } else {
+                list.classList.add('collapsed');
+                list.classList.remove('expanded');
+                arrow.classList.remove('expanded');
+            }
+        });
 
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
@@ -2365,6 +2624,34 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                 showStatus('Schematic updated', 'success');
                 documentDirty = true;
                 updateSaveBar();
+            } else if (message.type === 'hiddenFieldsUpdated') {
+                // Field was hidden - re-render tree with updated hidden list
+                hiddenFields = message.hiddenFields || [];
+                if (currentData) {
+                    currentData.hiddenFields = hiddenFields;
+                    document.getElementById('tree').innerHTML = renderTreeNode(currentData.tree, true);
+                    updateHiddenBar();
+                    // Re-attach tree handlers
+                    document.querySelectorAll('.tree-header').forEach(function(header) {
+                        header.addEventListener('click', function(e) {
+                            if (e.target.classList.contains('tree-hide-btn')) {
+                                e.stopPropagation();
+                                hideField(e.target.dataset.fieldKey);
+                                return;
+                            }
+                            var node = header.closest('.tree-node');
+                            var children = node.querySelector('.tree-children');
+                            var toggle = header.querySelector('.tree-toggle');
+                            if (children) {
+                                children.classList.toggle('collapsed');
+                                toggle.textContent = children.classList.contains('collapsed') ? '+' : '-';
+                            }
+                            if (header.dataset.offset) {
+                                showChunkDetail(header);
+                            }
+                        });
+                    });
+                }
             }
         });
 
@@ -2707,8 +2994,14 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                 ? 'Extends: ' + data.derivation
                 : '';
 
+            // Update hidden fields from data
+            hiddenFields = data.hiddenFields || [];
+
             // Render tree
             document.getElementById('tree').innerHTML = renderTreeNode(data.tree, true);
+
+            // Update hidden bar
+            updateHiddenBar();
 
             // Render strings and properties
             renderStrings(data.properties);
@@ -2724,9 +3017,24 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                 document.getElementById('schematic-tab-btn').classList.add('hidden');
             }
 
+            // For non-IFF files (appearance types), default to Tree View tab
+            if (data.properties.length === 0 && !data.isSchematic) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('.tab[data-tab="tree"]').classList.add('active');
+                document.getElementById('tree-tab').classList.add('active');
+            }
+
             // Add tree toggle handlers
             document.querySelectorAll('.tree-header').forEach(header => {
                 header.addEventListener('click', (e) => {
+                    // Check if X button was clicked
+                    if (e.target.classList.contains('tree-hide-btn')) {
+                        e.stopPropagation();
+                        hideField(e.target.dataset.fieldKey);
+                        return;
+                    }
+
                     const node = header.closest('.tree-node');
                     const children = node.querySelector('.tree-children');
                     const toggle = header.querySelector('.tree-toggle');
@@ -2746,8 +3054,14 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         }
 
         function renderTreeNode(node, isRoot = false) {
+            var fieldKey = getFieldKey(node);
+            // Never hide the root node
+            if (!isRoot && hiddenFields.indexOf(fieldKey) >= 0) {
+                return '';
+            }
             if (node.type === 'form') {
                 const hasChildren = node.children && node.children.length > 0;
+                const hideBtn = isRoot ? '' : \`<span class="tree-hide-btn" data-field-key="\${escapeHtml(fieldKey)}" title="Hide this field">&times;</span>\`;
                 return \`
                     <div class="tree-node \${isRoot ? 'root' : ''}">
                         <div class="tree-header">
@@ -2755,6 +3069,7 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                             <span class="tree-tag">FORM</span>
                             <span class="tree-form-name">\${node.formName}</span>
                             <span class="tree-size">(\${node.size} bytes)</span>
+                            \${hideBtn}
                         </div>
                         \${hasChildren ? \`
                             <div class="tree-children">
@@ -2766,6 +3081,7 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             } else {
                 const propName = node.propertyName ? \`<span class="tree-prop-name">\${escapeHtml(node.propertyName)}</span>\` : '';
                 const preview = node.propertyName ? '' : \`<span class="tree-preview">\${escapeHtml(node.preview || '')}</span>\`;
+                const hideBtn = \`<span class="tree-hide-btn" data-field-key="\${escapeHtml(fieldKey)}" title="Hide this field">&times;</span>\`;
                 return \`
                     <div class="tree-node">
                         <div class="tree-header" data-offset="\${node.offset}" data-size="\${node.fullSize || node.size}" data-hex="\${escapeHtml(node.hex || '')}">
@@ -2774,6 +3090,7 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                             \${propName}
                             <span class="tree-size">(\${node.fullSize || node.size} bytes)</span>
                             \${preview}
+                            \${hideBtn}
                         </div>
                     </div>
                 \`;

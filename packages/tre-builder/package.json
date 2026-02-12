@@ -37,16 +37,19 @@
             {
                 "command": "treBuilder.build",
                 "title": "Build TRE",
+                "category": "SWG",
                 "icon": "$(tools)"
             },
             {
                 "command": "treBuilder.refresh",
                 "title": "Refresh File List",
+                "category": "SWG",
                 "icon": "$(refresh)"
             },
             {
                 "command": "treBuilder.validate",
                 "title": "Run Validations",
+                "category": "SWG",
                 "icon": "$(check)"
             }
         ],

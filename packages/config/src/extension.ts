@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { ForgeHub } from './forgeHub';
 
 /**
  * SWG Forge configuration helper.
@@ -26,8 +27,6 @@ export interface SWGForgePaths {
     treVanilla: string;
     /** Absolute path to read-only server-specific TRE directory */
     treReference: string;
-    /** Absolute path to TRE export directory */
-    treExport: string;
     /** Workspace root */
     workspaceRoot: string;
 }
@@ -56,13 +55,18 @@ export function getForgeConfig(): SWGForgePaths | null {
         treWorking: path.join(workspaceRoot, config.get<string>('tre.workingPath', 'tre/working')),
         treVanilla: path.join(workspaceRoot, config.get<string>('tre.vanillaPath', 'tre/vanilla')),
         treReference: path.join(workspaceRoot, config.get<string>('tre.referencePath', 'tre/infinity')),
-        treExport: path.join(workspaceRoot, config.get<string>('tre.exportPath', 'tre/export')),
         workspaceRoot
     };
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    // Register a command to show current config (useful for debugging)
+    // Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('swgForge.open', () => {
+            ForgeHub.createOrShow();
+        })
+    );
+
     context.subscriptions.push(
         vscode.commands.registerCommand('swgForge.showConfig', () => {
             const paths = getForgeConfig();
@@ -80,7 +84,6 @@ export function activate(context: vscode.ExtensionContext) {
                 `TRE Working:       ${paths.treWorking}`,
                 `TRE Vanilla:       ${paths.treVanilla}`,
                 `TRE Reference:     ${paths.treReference}`,
-                `TRE Export:        ${paths.treExport}`,
             ];
 
             const doc = vscode.workspace.openTextDocument({
@@ -90,6 +93,14 @@ export function activate(context: vscode.ExtensionContext) {
             doc.then(d => vscode.window.showTextDocument(d));
         })
     );
+
+    // Status bar button
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBarItem.text = '$(rocket) SWG Forge';
+    statusBarItem.tooltip = 'Open SWG: Forge toolkit';
+    statusBarItem.command = 'swgForge.open';
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
 }
 
 export function deactivate() {}

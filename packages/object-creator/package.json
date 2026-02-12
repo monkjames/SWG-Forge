@@ -1,7 +1,7 @@
 {
-    "name": "armor-forge",
-    "displayName": "SWG Armor Forge",
-    "description": "Generate complete SWG armor sets - creates all Lua templates, TRE entries, CRC registrations, and ACM customization in one shot",
+    "name": "object-creator",
+    "displayName": "SWG Object Creator",
+    "description": "Create new SWG objects from existing appearance chains",
     "version": "1.0.0",
     "publisher": "swgemu",
     "engines": {
@@ -11,14 +11,14 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:armorForge.open"
+        "onCommand:objectCreator.open"
     ],
     "main": "./out/extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "armorForge.open",
-                "title": "Armor Forge",
+                "command": "objectCreator.open",
+                "title": "Object Creator",
                 "category": "SWG"
             }
         ]
@@ -27,12 +27,12 @@
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./"
     },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    },
     "devDependencies": {
         "@types/node": "^18.0.0",
         "@types/vscode": "^1.74.0",
         "typescript": "^5.0.0"
-    },
-    "dependencies": {
-        "@swgemu/core": "file:../core"
     }
 }

@@ -1,0 +1,48 @@
+{
+    "name": "palette-editor",
+    "displayName": "SWG Palette Editor",
+    "description": "Visual editor for SWG RIFF PAL palette files - view, edit, and create color palettes",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "paletteEditor.palFile",
+                "displayName": "Palette Editor",
+                "selector": [
+                    {
+                        "filenamePattern": "*.pal"
+                    }
+                ],
+                "priority": "default"
+            }
+        ],
+        "commands": [
+            {
+                "command": "paletteEditor.browse",
+                "title": "Browse Palettes",
+                "category": "SWG"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

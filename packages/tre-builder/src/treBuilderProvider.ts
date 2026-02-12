@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { TREWriter } from './treWriter';
 import { Validator, ValidationResult } from './validators';
+import { parseCRCTable, addCRCEntries, serializeCRCTable } from '@swgemu/core';
 
 interface FileInfo {
     relativePath: string;
@@ -52,6 +53,9 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
                 case 'openFile':
                     this.openFile(message.path);
                     break;
+                case 'fixCRC':
+                    this.fixCRC();
+                    break;
             }
         });
 
@@ -72,7 +76,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
         const workspaceFolder = this._getWorkspaceFolder();
         if (!workspaceFolder) return;
 
-        const validator = new Validator(workspaceFolder);
+        const validator = this._createValidator(workspaceFolder);
         this._validationResults = await validator.runAll(this._files);
 
         this._updateView();
@@ -92,7 +96,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
 
         try {
             // Run validation first
-            const validator = new Validator(workspaceFolder);
+            const validator = this._createValidator(workspaceFolder);
             this._validationResults = await validator.runAll(this._files);
 
             // Check for errors (not warnings) - skip if force build
@@ -155,6 +159,49 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
         const fullPath = path.join(workspaceFolder, workingFolder, relativePath);
 
         vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fullPath));
+    }
+
+    public async fixCRC() {
+        const workspaceFolder = this._getWorkspaceFolder();
+        if (!workspaceFolder) return;
+
+        // Gather missing paths from validation results
+        const missingPaths = this._validationResults
+            .filter(r => r.severity === 'error' && r.file)
+            .map(r => r.file!);
+
+        if (missingPaths.length === 0) {
+            vscode.window.showInformationMessage('No missing CRC entries to fix.');
+            return;
+        }
+
+        // Find the CRC table in the working folder
+        const crcPath = path.join(workspaceFolder, 'tre/working/misc/object_template_crc_string_table.iff');
+        if (!fs.existsSync(crcPath)) {
+            vscode.window.showErrorMessage('No CRC table found in tre/working/misc/. Copy one there first.');
+            return;
+        }
+
+        try {
+            const data = fs.readFileSync(crcPath);
+            const table = parseCRCTable(new Uint8Array(data));
+            const added = addCRCEntries(table, missingPaths);
+
+            if (added.length === 0) {
+                vscode.window.showInformationMessage('All entries already exist in the CRC table.');
+                return;
+            }
+
+            const serialized = serializeCRCTable(table);
+            fs.writeFileSync(crcPath, Buffer.from(serialized));
+
+            vscode.window.showInformationMessage(`Added ${added.length} entries to CRC table.`);
+
+            // Re-run validation to update the UI
+            await this.validate();
+        } catch (e: any) {
+            vscode.window.showErrorMessage(`Failed to fix CRC table: ${e.message}`);
+        }
     }
 
     private async _scanFiles() {
@@ -333,6 +380,13 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
         this._postMessage({ type: 'buildStatus', status: `Manifest: ${Object.keys(manifest.files).length} files` });
     }
 
+    private _createValidator(workspaceFolder: string): Validator {
+        const forgeConfig = vscode.workspace.getConfiguration('swgForge');
+        const scriptsPath = forgeConfig.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts');
+        const customScriptsFolder = forgeConfig.get<string>('customScriptsFolder', 'custom_scripts');
+        return new Validator(workspaceFolder, scriptsPath, customScriptsFolder);
+    }
+
     private _getWorkspaceFolder(): string | undefined {
         const folders = vscode.workspace.workspaceFolders;
         return folders && folders.length > 0 ? folders[0].uri.fsPath : undefined;
@@ -362,348 +416,238 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
         const config = vscode.workspace.getConfiguration('treBuilder');
         const outputPath = config.get<string>('outputPath', 'tre4/infinity_wicked_special.tre');
 
-        return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRE Builder</title>
-    <style>
-        body {
-            font-family: var(--vscode-font-family);
-            font-size: var(--vscode-font-size);
-            color: var(--vscode-foreground);
-            padding: 0;
-            margin: 0;
-        }
-        .header {
-            padding: 10px;
-            border-bottom: 1px solid var(--vscode-panel-border);
-            background: var(--vscode-sideBar-background);
-        }
-        .target {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-bottom: 8px;
-        }
-        .stats {
-            font-size: 12px;
-            display: flex;
-            gap: 12px;
-        }
-        .stat {
-            opacity: 0.7;
-        }
-        .buttons {
-            display: flex;
-            gap: 6px;
-            margin-top: 10px;
-        }
-        button {
-            background: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-            border: none;
-            padding: 6px 12px;
-            cursor: pointer;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        button:hover {
-            background: var(--vscode-button-hoverBackground);
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .build-btn {
-            background: var(--vscode-button-prominentBackground, #0e639c);
-        }
-        .force-btn {
-            background: #b45309;
-        }
-        .force-btn:hover {
-            background: #d97706;
-        }
-        .section {
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--vscode-panel-border);
-        }
-        .section-header {
-            font-weight: bold;
-            font-size: 11px;
-            text-transform: uppercase;
-            opacity: 0.7;
-            margin-bottom: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .section-header:hover {
-            opacity: 1;
-        }
-        .file-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .file-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 0;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .file-item:hover {
-            background: var(--vscode-list-hoverBackground);
-        }
-        .file-icon {
-            opacity: 0.6;
-        }
-        .file-name {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .file-meta {
-            font-size: 10px;
-            opacity: 0.5;
-        }
-        .file-new {
-            color: #4ade80;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .validation-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-            padding: 4px 0;
-            font-size: 12px;
-        }
-        .validation-icon {
-            flex-shrink: 0;
-        }
-        .validation-error { color: #f87171; }
-        .validation-warning { color: #fbbf24; }
-        .validation-ok { color: #4ade80; }
-        .status {
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-        }
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--vscode-foreground);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .empty {
-            padding: 20px;
-            text-align: center;
-            opacity: 0.6;
-            font-size: 12px;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="target">Target: <strong>${outputPath}</strong></div>
-        <div class="stats">
-            <span class="stat" id="fileCount">Files: 0</span>
-            <span class="stat" id="totalSize">Size: 0 KB</span>
-        </div>
-        <div class="buttons">
-            <button class="build-btn" id="buildBtn" onclick="build()">Build TRE</button>
-            <button class="force-btn" id="forceBtn" onclick="forceBuild()" style="display:none">Force Build</button>
-            <button onclick="validate()">Validate</button>
-            <button onclick="refresh()">Refresh</button>
-        </div>
-    </div>
+        const lines: string[] = [
+            '<!DOCTYPE html>',
+            '<html lang="en">',
+            '<head>',
+            '<meta charset="UTF-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+            '<title>TRE Builder</title>',
+            '<style>',
+            '  body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); padding: 0; margin: 0; }',
+            '  .header { padding: 10px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); }',
+            '  .target { font-size: 11px; opacity: 0.8; margin-bottom: 8px; }',
+            '  .stats { font-size: 12px; display: flex; gap: 12px; }',
+            '  .stat { opacity: 0.7; }',
+            '  .buttons { display: flex; gap: 6px; margin-top: 10px; }',
+            '  button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 6px 12px; cursor: pointer; border-radius: 3px; font-size: 12px; }',
+            '  button:hover { background: var(--vscode-button-hoverBackground); }',
+            '  button:disabled { opacity: 0.5; cursor: not-allowed; }',
+            '  .build-btn { background: var(--vscode-button-prominentBackground, #0e639c); }',
+            '  .force-btn { background: #b45309; }',
+            '  .force-btn:hover { background: #d97706; }',
+            '  .fix-btn { background: #15803d; }',
+            '  .fix-btn:hover { background: #16a34a; }',
+            '  .section { padding: 8px 10px; border-bottom: 1px solid var(--vscode-panel-border); }',
+            '  .section-header { font-weight: bold; font-size: 11px; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; }',
+            '  .section-header:hover { opacity: 1; }',
+            '  .tree-container { overflow-y: auto; }',
+            '  .tree-row { display: flex; align-items: center; padding: 2px 0; font-size: 12px; cursor: pointer; white-space: nowrap; }',
+            '  .tree-row:hover { background: var(--vscode-list-hoverBackground); }',
+            '  .tree-indent { display: inline-block; width: 16px; flex-shrink: 0; }',
+            '  .tree-toggle { display: inline-block; width: 16px; flex-shrink: 0; text-align: center; font-size: 10px; opacity: 0.7; }',
+            '  .tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }',
+            '  .tree-dir { opacity: 0.9; }',
+            '  .tree-file { opacity: 0.8; }',
+            '  .tree-count { font-size: 10px; opacity: 0.5; margin-left: 6px; }',
+            '  .tree-badge-new { color: #4ade80; font-size: 10px; font-weight: bold; margin-left: 6px; }',
+            '  .tree-meta { font-size: 10px; opacity: 0.4; margin-left: 6px; }',
+            '  .validation-item { display: flex; align-items: flex-start; gap: 6px; padding: 4px 0; font-size: 12px; }',
+            '  .validation-icon { flex-shrink: 0; }',
+            '  .validation-error { color: #f87171; }',
+            '  .validation-warning { color: #fbbf24; }',
+            '  .validation-ok { color: #4ade80; }',
+            '  .status { padding: 10px; text-align: center; font-size: 12px; }',
+            '  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--vscode-foreground); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle; }',
+            '  @keyframes spin { to { transform: rotate(360deg); } }',
+            '  .empty { padding: 20px; text-align: center; opacity: 0.6; font-size: 12px; }',
+            '</style>',
+            '</head>',
+            '<body>',
+            '<div class="header">',
+            '  <div class="target">Target: <strong>' + outputPath + '</strong></div>',
+            '  <div class="stats">',
+            '    <span class="stat" id="fileCount">Files: 0</span>',
+            '    <span class="stat" id="totalSize">Size: 0 KB</span>',
+            '  </div>',
+            '  <div class="buttons">',
+            '    <button class="build-btn" id="buildBtn" onclick="build()">Build TRE</button>',
+            '    <button class="force-btn" id="forceBtn" onclick="forceBuild()" style="display:none">Force Build</button>',
+            '    <button class="fix-btn" id="fixBtn" onclick="fixCRC()" style="display:none">Fix CRC</button>',
+            '    <button onclick="validate()">Validate</button>',
+            '    <button onclick="refresh()">Refresh</button>',
+            '  </div>',
+            '</div>',
+            '<div id="status" class="status" style="display:none"></div>',
+            '<div class="section" id="validationSection" style="display:none">',
+            '  <div class="section-header" onclick="toggleSection(\'validations\')">',
+            '    <span id="validationToggle">&#x25BC;</span> Validation Results',
+            '  </div>',
+            '  <div id="validations"></div>',
+            '</div>',
+            '<div class="section">',
+            '  <div class="section-header" onclick="toggleSection(\'files\')">',
+            '    <span id="filesToggle">&#x25BC;</span> Working Files',
+            '  </div>',
+            '  <div class="tree-container" id="fileTree"></div>',
+            '</div>',
+            '<script>',
+            'const vscode = acquireVsCodeApi();',
+            'let files = [];',
+            'let validations = [];',
+            'let sectionsCollapsed = { files: false, validations: false };',
+            'let collapsedDirs = {};',
+            '',
+            'function build() { vscode.postMessage({ command: "build" }); }',
+            'function forceBuild() { vscode.postMessage({ command: "forceBuild" }); }',
+            'function fixCRC() { vscode.postMessage({ command: "fixCRC" }); }',
+            'function refresh() { vscode.postMessage({ command: "refresh" }); }',
+            'function validate() { vscode.postMessage({ command: "validate" }); }',
+            'function openFile(p) { vscode.postMessage({ command: "openFile", path: p }); }',
+            '',
+            'function toggleSection(section) {',
+            '  sectionsCollapsed[section] = !sectionsCollapsed[section];',
+            '  renderTree();',
+            '  renderValidations();',
+            '}',
+            '',
+            'function toggleDir(dirPath) {',
+            '  collapsedDirs[dirPath] = !collapsedDirs[dirPath];',
+            '  renderTree();',
+            '}',
+            '',
+            'function formatSize(bytes) {',
+            '  if (bytes < 1024) return bytes + " B";',
+            '  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";',
+            '  return (bytes / (1024 * 1024)).toFixed(1) + " MB";',
+            '}',
+            '',
+            'function buildTree(files) {',
+            '  var root = { dirs: {}, files: [] };',
+            '  for (var i = 0; i < files.length; i++) {',
+            '    var parts = files[i].relativePath.split("/");',
+            '    var node = root;',
+            '    for (var j = 0; j < parts.length - 1; j++) {',
+            '      if (!node.dirs[parts[j]]) { node.dirs[parts[j]] = { dirs: {}, files: [] }; }',
+            '      node = node.dirs[parts[j]];',
+            '    }',
+            '    node.files.push(files[i]);',
+            '  }',
+            '  return root;',
+            '}',
+            '',
+            'function countFiles(node) {',
+            '  var c = node.files.length;',
+            '  var keys = Object.keys(node.dirs);',
+            '  for (var i = 0; i < keys.length; i++) { c += countFiles(node.dirs[keys[i]]); }',
+            '  return c;',
+            '}',
+            '',
+            'function renderNode(node, depth, pathPrefix, html) {',
+            '  var dirNames = Object.keys(node.dirs).sort();',
+            '  for (var d = 0; d < dirNames.length; d++) {',
+            '    var name = dirNames[d];',
+            '    var dirPath = pathPrefix ? pathPrefix + "/" + name : name;',
+            '    var child = node.dirs[name];',
+            '    var count = countFiles(child);',
+            '    var isCollapsed = !!collapsedDirs[dirPath];',
+            '    var indent = "";',
+            '    for (var i = 0; i < depth; i++) { indent += "<span class=\\"tree-indent\\"></span>"; }',
+            '    var arrow = isCollapsed ? "&#x25B6;" : "&#x25BC;";',
+            '    html.push("<div class=\\"tree-row\\" data-dir=\\"" + dirPath + "\\">" + indent + "<span class=\\"tree-toggle\\">" + arrow + "</span><span class=\\"tree-label tree-dir\\">" + name + "/</span><span class=\\"tree-count\\">" + count + "</span></div>");',
+            '    if (!isCollapsed) {',
+            '      renderNode(child, depth + 1, dirPath, html);',
+            '    }',
+            '  }',
+            '  for (var f = 0; f < node.files.length; f++) {',
+            '    var file = node.files[f];',
+            '    var fname = file.relativePath.split("/").pop();',
+            '    var indent = "";',
+            '    for (var i = 0; i < depth; i++) { indent += "<span class=\\"tree-indent\\"></span>"; }',
+            '    indent += "<span class=\\"tree-indent\\"></span>";',
+            '    var badge = file.isNew ? "<span class=\\"tree-badge-new\\">NEW</span>" : "";',
+            '    html.push("<div class=\\"tree-row\\" data-file=\\"" + file.relativePath + "\\">" + indent + "<span class=\\"tree-label tree-file\\">" + fname + "</span>" + badge + "</div>");',
+            '  }',
+            '}',
+            '',
+            'function renderTree() {',
+            '  var container = document.getElementById("fileTree");',
+            '  var toggle = document.getElementById("filesToggle");',
+            '  toggle.innerHTML = sectionsCollapsed.files ? "&#x25B6;" : "&#x25BC;";',
+            '  if (sectionsCollapsed.files) { container.innerHTML = ""; return; }',
+            '  if (files.length === 0) { container.innerHTML = "<div class=\\"empty\\">No files in working folder</div>"; return; }',
+            '  var tree = buildTree(files);',
+            '  var html = [];',
+            '  renderNode(tree, 0, "", html);',
+            '  container.innerHTML = html.join("\\n");',
+            '  document.getElementById("fileCount").textContent = "Files: " + files.length;',
+            '  var totalSize = 0;',
+            '  for (var i = 0; i < files.length; i++) { totalSize += files[i].size; }',
+            '  document.getElementById("totalSize").textContent = "Size: " + formatSize(totalSize);',
+            '}',
+            '',
+            'document.addEventListener("click", function(e) {',
+            '  var row = e.target.closest(".tree-row");',
+            '  if (!row) return;',
+            '  if (row.dataset.dir) { toggleDir(row.dataset.dir); }',
+            '  else if (row.dataset.file) { openFile(row.dataset.file); }',
+            '});',
+            '',
+            'function renderValidations() {',
+            '  var section = document.getElementById("validationSection");',
+            '  var container = document.getElementById("validations");',
+            '  var toggle = document.getElementById("validationToggle");',
+            '  if (validations.length === 0) { section.style.display = "none"; return; }',
+            '  section.style.display = "block";',
+            '  toggle.innerHTML = sectionsCollapsed.validations ? "&#x25B6;" : "&#x25BC;";',
+            '  if (sectionsCollapsed.validations) { container.innerHTML = ""; return; }',
+            '  var html = [];',
+            '  for (var i = 0; i < validations.length; i++) {',
+            '    var v = validations[i];',
+            '    var cls = v.severity === "error" ? "validation-error" : v.severity === "warning" ? "validation-warning" : "validation-ok";',
+            '    var icon = v.severity === "error" ? "&#x274C;" : v.severity === "warning" ? "&#x26A0;&#xFE0F;" : "&#x2705;";',
+            '    html.push("<div class=\\"validation-item\\"><span class=\\"validation-icon " + cls + "\\">" + icon + "</span><span>" + v.message + "</span></div>");',
+            '  }',
+            '  container.innerHTML = html.join("\\n");',
+            '}',
+            '',
+            'window.addEventListener("message", function(event) {',
+            '  var message = event.data;',
+            '  switch (message.type) {',
+            '    case "update":',
+            '      files = message.files || [];',
+            '      validations = message.validations || [];',
+            '      document.getElementById("buildBtn").disabled = message.isBuilding;',
+            '      document.getElementById("forceBtn").disabled = message.isBuilding;',
+            '      document.getElementById("status").style.display = "none";',
+            '      var hasErrors = false;',
+            '      for (var i = 0; i < validations.length; i++) { if (validations[i].severity === "error") { hasErrors = true; break; } }',
+            '      document.getElementById("forceBtn").style.display = hasErrors ? "inline-block" : "none";',
+            '      document.getElementById("fixBtn").style.display = hasErrors ? "inline-block" : "none";',
+            '      renderTree();',
+            '      renderValidations();',
+            '      break;',
+            '    case "building":',
+            '      document.getElementById("status").style.display = "block";',
+            '      document.getElementById("status").innerHTML = "<span class=\\"spinner\\"></span>Building TRE...";',
+            '      document.getElementById("buildBtn").disabled = true;',
+            '      break;',
+            '    case "validating":',
+            '      document.getElementById("status").style.display = "block";',
+            '      document.getElementById("status").innerHTML = "<span class=\\"spinner\\"></span>Running validations...";',
+            '      break;',
+            '    case "buildStatus":',
+            '      document.getElementById("status").innerHTML = "<span class=\\"spinner\\"></span>" + message.status;',
+            '      break;',
+            '  }',
+            '});',
+            '',
+            'refresh();',
+            '</script>',
+            '</body>',
+            '</html>',
+        ];
 
-    <div id="status" class="status" style="display:none"></div>
-
-    <div class="section" id="validationSection" style="display:none">
-        <div class="section-header" onclick="toggleSection('validations')">
-            <span id="validationToggle">▼</span> Validation Results
-        </div>
-        <div id="validations"></div>
-    </div>
-
-    <div class="section">
-        <div class="section-header" onclick="toggleSection('files')">
-            <span id="filesToggle">▼</span> Files (by last modified)
-        </div>
-        <div class="file-list" id="fileList"></div>
-    </div>
-
-    <script>
-        const vscode = acquireVsCodeApi();
-        let files = [];
-        let validations = [];
-        let sectionsCollapsed = { files: false, validations: false };
-
-        function build() {
-            vscode.postMessage({ command: 'build' });
-        }
-
-        function forceBuild() {
-            vscode.postMessage({ command: 'forceBuild' });
-        }
-
-        function refresh() {
-            vscode.postMessage({ command: 'refresh' });
-        }
-
-        function validate() {
-            vscode.postMessage({ command: 'validate' });
-        }
-
-        function openFile(path) {
-            vscode.postMessage({ command: 'openFile', path: path });
-        }
-
-        function toggleSection(section) {
-            sectionsCollapsed[section] = !sectionsCollapsed[section];
-            renderFiles();
-            renderValidations();
-        }
-
-        function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-        }
-
-        function formatTime(isoString) {
-            const date = new Date(isoString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
-
-            if (diffMins < 1) return 'just now';
-            if (diffMins < 60) return diffMins + 'm ago';
-            if (diffHours < 24) return diffHours + 'h ago';
-            if (diffDays < 7) return diffDays + 'd ago';
-            return date.toLocaleDateString();
-        }
-
-        function getFileIcon(path) {
-            if (path.endsWith('.iff')) return '📦';
-            if (path.endsWith('.stf')) return '📝';
-            if (path.endsWith('.trn')) return '🗺️';
-            if (path.endsWith('.ws')) return '🌍';
-            return '📄';
-        }
-
-        function renderFiles() {
-            const container = document.getElementById('fileList');
-            const toggle = document.getElementById('filesToggle');
-            toggle.textContent = sectionsCollapsed.files ? '▶' : '▼';
-
-            if (sectionsCollapsed.files) {
-                container.innerHTML = '';
-                return;
-            }
-
-            if (files.length === 0) {
-                container.innerHTML = '<div class="empty">No files in working folder</div>';
-                return;
-            }
-
-            container.innerHTML = files.map(f => {
-                const newBadge = f.isNew ? '<span class="file-new">NEW</span>' : '';
-                return '<div class="file-item" onclick="openFile(\\'' + f.relativePath.replace(/'/g, "\\\\'") + '\\')">' +
-                    '<span class="file-icon">' + getFileIcon(f.relativePath) + '</span>' +
-                    '<span class="file-name">' + f.relativePath + '</span>' +
-                    newBadge +
-                    '<span class="file-meta">' + formatTime(f.modifiedTime) + '</span>' +
-                '</div>';
-            }).join('');
-
-            // Update stats
-            document.getElementById('fileCount').textContent = 'Files: ' + files.length;
-            const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-            document.getElementById('totalSize').textContent = 'Size: ' + formatSize(totalSize);
-        }
-
-        function renderValidations() {
-            const section = document.getElementById('validationSection');
-            const container = document.getElementById('validations');
-            const toggle = document.getElementById('validationToggle');
-
-            if (validations.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-
-            section.style.display = 'block';
-            toggle.textContent = sectionsCollapsed.validations ? '▶' : '▼';
-
-            if (sectionsCollapsed.validations) {
-                container.innerHTML = '';
-                return;
-            }
-
-            container.innerHTML = validations.map(v => {
-                const iconClass = 'validation-' + (v.severity === 'error' ? 'error' : v.severity === 'warning' ? 'warning' : 'ok');
-                const icon = v.severity === 'error' ? '❌' : v.severity === 'warning' ? '⚠️' : '✅';
-                return '<div class="validation-item">' +
-                    '<span class="validation-icon ' + iconClass + '">' + icon + '</span>' +
-                    '<span>' + v.message + '</span>' +
-                '</div>';
-            }).join('');
-        }
-
-        window.addEventListener('message', event => {
-            const message = event.data;
-
-            switch (message.type) {
-                case 'update':
-                    files = message.files || [];
-                    validations = message.validations || [];
-                    document.getElementById('buildBtn').disabled = message.isBuilding;
-                    document.getElementById('forceBtn').disabled = message.isBuilding;
-                    document.getElementById('status').style.display = 'none';
-                    // Show Force Build button if there are validation errors
-                    const hasErrors = validations.some(v => v.severity === 'error');
-                    document.getElementById('forceBtn').style.display = hasErrors ? 'inline-block' : 'none';
-                    renderFiles();
-                    renderValidations();
-                    break;
-
-                case 'building':
-                    document.getElementById('status').style.display = 'block';
-                    document.getElementById('status').innerHTML = '<span class="spinner"></span>Building TRE...';
-                    document.getElementById('buildBtn').disabled = true;
-                    break;
-
-                case 'validating':
-                    document.getElementById('status').style.display = 'block';
-                    document.getElementById('status').innerHTML = '<span class="spinner"></span>Running validations...';
-                    break;
-
-                case 'buildStatus':
-                    document.getElementById('status').innerHTML = '<span class="spinner"></span>' + message.status;
-                    break;
-            }
-        });
-
-        // Request initial data
-        refresh();
-    </script>
-</body>
-</html>`;
+        return lines.join('\n');
     }
 }

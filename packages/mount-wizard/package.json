@@ -1,6 +1,6 @@
 {
     "name": "mount-wizard",
-    "displayName": "SWGEmu Mount Wizard",
+    "displayName": "SWG Mount Wizard",
     "description": "Automate making creatures and speeders into tameable mounts",
     "version": "1.0.0",
     "publisher": "swgemu",
@@ -20,12 +20,12 @@
             {
                 "command": "mountWizard.addMount",
                 "title": "Add Mount",
-                "category": "SWGEmu"
+                "category": "SWG"
             },
             {
                 "command": "mountWizard.validateMount",
                 "title": "Validate Mount",
-                "category": "SWGEmu"
+                "category": "SWG"
             }
         ],
         "menus": {

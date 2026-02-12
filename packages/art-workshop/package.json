@@ -1,6 +1,6 @@
 {
     "name": "art-workshop",
-    "displayName": "SWGEmu Art Workshop",
+    "displayName": "SWG Art Workshop",
     "description": "Generate in-game art objects (paintings, rugs, banners, tapestries) from DDS texture files",
     "version": "1.0.0",
     "publisher": "swgemu",
@@ -19,7 +19,7 @@
             {
                 "command": "artWorkshop.open",
                 "title": "Art Workshop",
-                "category": "SWGEmu"
+                "category": "SWG"
             }
         ]
     },
