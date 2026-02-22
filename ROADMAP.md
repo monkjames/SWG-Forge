@@ -58,13 +58,23 @@ Starting point: you already have the full appearance chain (APT down to DDS). Yo
 - Name collision check (CRC, STF, Lua) before writing
 - Reference object must exist in target folder
 
-### 1d. Clothing Maker
+### 1d. Clothing Maker ✅ COMPLETE (Enhancements Pending)
 
 Same as 1c (Object from Existing Appearance) but for wearables. Adds ACM (Asset Customization Manager) entries so the item supports palette-based color customization in the client.
 
-**Extra over 1c:**
-- ACM entry mapping appearance CRC to customization variables (palettes, color indices)
-- Palette file references
+**Core features (implemented):**
+- Looted or Crafted mode (with full schematic chain)
+- 10 clothing types with intelligent defaults (boots, gloves, pants, etc.)
+- Draft schematic generation (ingredients, experimentation, customization)
+- Loot schematic generation (recipe unlock items)
+- Color customization slots (single or dual palette)
+- Stats configuration (sockets, hitpoints)
+
+**Enhancements to add:**
+- [ ] **ACM Palette Browser Integration** — Visual palette picker instead of manual palette paths
+- [ ] **Armor Stat Templates** — Load protection values for combat-capable clothing
+- [ ] **Preview Step** — Show all files to be created/modified before generation
+- [ ] **Loot Group Generation** — Auto-create loot groups for the loot schematic item
 
 ### 1e. Armor Forge (Rewrite)
 
@@ -100,7 +110,7 @@ Duplicate an entire creature — all the way down to the DDS texture — so the 
 
 ---
 
-## 3. Building NPC Planner
+## 3. Building NPC Planner ✅ COMPLETE
 
 Visual tool for placing NPCs inside buildings, replacing the current workflow of manually recording coordinates in-game.
 
@@ -123,8 +133,25 @@ Given a building template (POB IFF from TRE), produce a visual cell-by-cell plan
 
 **Output:** A planning document / data file that can be used (with AI or directly) to generate the screenplay Lua that spawns the NPCs at those positions.
 
-### Open Questions
+### Implementation
 
-- Can we extract cell geometry (floor bounds, doorway connections) from the POB IFF?
-- What level of visual fidelity is useful — schematic boxes, or actual floor plan outlines?
-- Should this generate the screenplay directly, or produce an intermediate format?
+**Core Library (`@swgemu/core`):**
+- Complete POB parser ported from Python to TypeScript
+- Parses PRTO (version 0003/0004) with cells, portals, collision, path graphs
+- Extracts cell connectivity, names, appearance files
+
+**VSCode Extension (`building-npc-planner`):**
+- POB file browser (scans `tre/working/object/building/`)
+- Cell list with selection
+- Interactive 2D canvas (600x600, grid-based)
+- Click-to-place spawn points with configuration:
+  - Mobile template
+  - Heading (-180 to 180)
+  - Tier (1-5 for difficulty progression)
+- Complete screenplay export to `custom_scripts/screenplays/caves/{name}.lua`
+- Auto-generates spawn arrays, respawn logic (5-minute timers), creatureKilled observers
+
+**Answered Questions:**
+- ✅ Cell geometry: Using default 40x40 bounds (collision parsing can be enhanced later)
+- ✅ Visual fidelity: 2D top-down grid view (sufficient for spawn placement)
+- ✅ Output format: Direct Lua screenplay generation (no intermediate format needed)

@@ -1,0 +1,36 @@
+{
+    "name": "sfp-viewer",
+    "displayName": "SWG SFP Viewer",
+    "description": "Visual footprint viewer for SWG structure placement grids",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": ["Other"],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "sfpViewer.sfpFile",
+                "displayName": "SFP Viewer",
+                "selector": [
+                    {
+                        "filenamePattern": "*.sfp"
+                    }
+                ],
+                "priority": "default"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    }
+}

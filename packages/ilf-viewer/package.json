@@ -1,0 +1,39 @@
+{
+    "name": "ilf-viewer",
+    "displayName": "SWG ILF Viewer",
+    "description": "2D interior layout viewer for SWG ILF files with object placement visualization",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": ["Other"],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "ilfViewer.ilfFile",
+                "displayName": "ILF Viewer",
+                "selector": [
+                    {
+                        "filenamePattern": "*.ilf"
+                    }
+                ],
+                "priority": "default"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

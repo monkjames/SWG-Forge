@@ -41,6 +41,26 @@ const STANDALONE_TOOLS: ForgeTool[] = [
         description: 'Create new objects from existing appearance chains — IFF, STF, CRC, and Lua in one wizard.',
         command: 'objectCreator.open'
     },
+    {
+        name: 'Clothing Maker',
+        description: 'Create wearable clothing with ACM customization and crafting schematics — looted or crafted items in one flow.',
+        command: 'clothingMaker.open'
+    },
+    {
+        name: 'Mobile Duplicator',
+        description: 'Duplicate mobile creatures with complete appearance chains (SAT/LOD/MGN/MSH/SHT/DDS) — perfect for creating variants or mounts.',
+        command: 'mobileDuplicator.open'
+    },
+    {
+        name: 'Building NPC Planner',
+        description: 'Visual tool for placing NPCs inside buildings — load POB files, click-to-place spawns, and generate complete screenplays with respawn logic.',
+        command: 'buildingNpcPlanner.openPlanner'
+    },
+    {
+        name: 'Walkway Builder',
+        description: 'Generate complete walkway tile variants — LAY, SFP, IFF, Lua templates, CRC, and STF across all 5 object layers.',
+        command: 'walkwayBuilder.open'
+    },
 ];
 
 const SIDEBAR_TOOLS: ForgeTool[] = [
@@ -76,7 +96,7 @@ const FILE_TOOLS: ForgeTool[] = [
     {
         name: 'IFF Editor',
         description: 'Visual tree browser for IFF binary files with template-based chunk parsing and editing.',
-        fileTypes: '.iff, .apt, .sat, .lod, .msh, .mgn, .lmg, .sht, .pob, .flr, .ans, .skt, .prt, .cmp',
+        fileTypes: '.iff, .apt, .sat, .lod, .msh, .mgn, .lmg, .sht, .pob, .ans, .skt, .prt, .cmp',
         howToUse: 'Open any IFF-based file from the explorer. The editor activates automatically.'
     },
     {
@@ -114,6 +134,24 @@ const FILE_TOOLS: ForgeTool[] = [
         description: 'View and query SWG terrain files — check boundaries at specific coordinates.',
         fileTypes: '.trn',
         howToUse: 'Open any .trn file from the explorer. The viewer activates automatically.'
+    },
+    {
+        name: 'BDB Viewer',
+        description: 'Read-only viewer for SWGEmu Berkeley DB object databases with field decoding and pagination.',
+        fileTypes: '*.db',
+        howToUse: 'Open any .db file from the explorer. The viewer activates automatically.'
+    },
+    {
+        name: 'FLR Viewer',
+        description: 'Visual floor mesh renderer for building cells — triangles, wall edges, portals, and NPC path graphs.',
+        fileTypes: '*.flr',
+        howToUse: 'Open any .flr file from the explorer. Drag to pan, scroll to zoom, F to fit, P to toggle path graph.'
+    },
+    {
+        name: 'SFP Editor',
+        description: 'Visual editor for structure footprints — toggle cells, resize grids, set center, and adjust dimensions.',
+        fileTypes: '*.sfp',
+        howToUse: 'Open any .sfp file. Files in tre/working/ are editable. Click cells to toggle, right-click to set center.'
     },
 ];
 

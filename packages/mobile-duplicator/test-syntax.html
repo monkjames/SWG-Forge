@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+var mobilesByFolder = {};
+
+function buildTree(mobiles, containerId) {
+  mobilesByFolder = {};
+  var tree = {};
+  mobiles.forEach(function(m) {
+    if (!mobilesByFolder[m.folder]) mobilesByFolder[m.folder] = [];
+    mobilesByFolder[m.folder].push(m);
+    var parts = m.folder.split("/");
+    var node = tree;
+    for (var i = 0; i < parts.length; i++) {
+      if (!node[parts[i]]) node[parts[i]] = {};
+      node = node[parts[i]];
+    }
+  });
+  var container = document.getElementById(containerId);
+  container.innerHTML = "";
+  renderNode(container, tree, "");
+}
+
+function renderNode(parent, node, path) {
+  var keys = Object.keys(node).sort();
+  keys.forEach(function(key) {
+    var fullPath = path ? path + "/" + key : key;
+    var hasChildren = Object.keys(node[key]).length > 0;
+    var hasMobiles = mobilesByFolder[fullPath] && mobilesByFolder[fullPath].length > 0;
+    var nodeDiv = document.createElement("div");
+    var header = document.createElement("div");
+    header.className = "tree-node-header";
+    var icon = document.createElement("span");
+    icon.className = "tree-icon";
+    var autoExpand = key === "mobile" || path === "";
+    icon.textContent = (hasChildren || hasMobiles) ? (autoExpand ? "▼" : "▶") : "  ";
+  });
+}
+
+console.log("Syntax OK");
+</script>
+</body>
+</html>

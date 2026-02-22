@@ -18,6 +18,10 @@ VSCode extensions for Star Wars Galaxies Emulator (SWGEmu) development. Visual e
 | **Art Workshop** | Generate in-game art objects from DDS textures |
 | **Crafting Workshop** | Simulate and design craftable items |
 | **Mount Wizard** | Automate making creatures/speeders into mounts |
+| **Building NPC Planner** | Visual tool for placing NPCs in buildings - generates complete screenplays |
+| **Object Creator** | Create new objects with full TRE + Lua pipeline |
+| **Clothing Maker** | Create wearable items with ACM color customization |
+| **Mobile Duplicator** | Duplicate creatures with appearance chains |
 | **TRE Builder** | Build TRE archives from working folder |
 | **TRN Viewer** | View and query terrain (.trn) files |
 

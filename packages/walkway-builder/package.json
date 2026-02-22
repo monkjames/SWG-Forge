@@ -1,0 +1,38 @@
+{
+    "name": "walkway-builder",
+    "displayName": "SWG Walkway Builder",
+    "description": "Generate complete walkway tile variants — LAY, SFP, IFF, Lua templates, CRC, and STF in one shot",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:walkwayBuilder.open"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "walkwayBuilder.open",
+                "title": "Walkway Builder",
+                "category": "SWG"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}

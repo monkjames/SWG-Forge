@@ -30,7 +30,6 @@
                     { "filenamePattern": "*.skt" },
                     { "filenamePattern": "*.prt" },
                     { "filenamePattern": "*.pob" },
-                    { "filenamePattern": "*.flr" },
                     { "filenamePattern": "*.cmp" },
                     { "filenamePattern": "*.spr" },
                     { "filenamePattern": "*.lat" },

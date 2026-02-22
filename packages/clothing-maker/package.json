@@ -1,0 +1,34 @@
+{
+  "name": "clothing-maker",
+  "displayName": "SWG Clothing Maker",
+  "description": "Create wearable clothing items with ACM customization and crafting schematics",
+  "version": "1.0.0",
+  "publisher": "swgemu",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:clothingMaker.open"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "clothingMaker.open",
+        "title": "Clothing Maker",
+        "category": "SWG"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "@swgemu/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.60.0",
+    "typescript": "^5.0.0"
+  }
+}

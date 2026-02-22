@@ -246,7 +246,7 @@ export class CreatorPanel {
         h.push('.checkbox-row { display: flex; align-items: center; gap: 6px; margin: 8px 0; }');
         h.push('.checkbox-row label { min-width: auto; color: var(--vscode-foreground); }');
         h.push('.menu-section { margin-left: 28px; margin-top: 6px; }');
-        h.push('.folder-tree { max-height: 400px; overflow-y: auto; border: 1px solid var(--vscode-widget-border); padding: 8px; margin: 0 0 8px 0; font-family: var(--vscode-editor-font-family); font-size: 0.9em; }');
+        h.push('.folder-tree { max-height: 600px; overflow-y: auto; border: 1px solid var(--vscode-widget-border); padding: 8px; margin: 0 0 8px 0; font-family: var(--vscode-editor-font-family); font-size: 0.9em; }');
         h.push('.tree-node { display: flex; align-items: center; padding: 2px 0; }');
         h.push('.tree-icon { width: 16px; text-align: center; cursor: pointer; user-select: none; color: var(--vscode-descriptionForeground); }');
         h.push('.tree-label { flex: 1; padding: 2px 4px; cursor: pointer; }');
@@ -441,7 +441,8 @@ export class CreatorPanel {
         h.push('    nodeHeader.className = "tree-node";');
         h.push('    var icon = document.createElement("span");');
         h.push('    icon.className = "tree-icon";');
-        h.push('    icon.textContent = hasChildren ? "▶" : "  ";');
+        h.push('    var autoExpand = key === "object" || path === "";');
+        h.push('    icon.textContent = hasChildren ? (autoExpand ? "▼" : "▶") : "  ";');
         h.push('    if (hasChildren) {');
         h.push('      icon.onclick = function(e) { toggleTreeNode(nodeDiv, icon); e.stopPropagation(); };');
         h.push('    }');
@@ -455,7 +456,7 @@ export class CreatorPanel {
         h.push('    nodeDiv.appendChild(nodeHeader);');
         h.push('    if (hasChildren) {');
         h.push('      var children = document.createElement("div");');
-        h.push('      children.className = "tree-children";');
+        h.push('      children.className = "tree-children" + (autoExpand ? " expanded" : "");');
         h.push('      renderTreeNode(children, node[key], fullPath);');
         h.push('      nodeDiv.appendChild(children);');
         h.push('    }');
