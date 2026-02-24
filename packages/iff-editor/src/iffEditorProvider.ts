@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseIFF, serializeIFF, serializeProperty, IFFDocument, IFFNode, IFFProperty, getTreeStructure } from './iffParser';
+import { parseCPIT, serializeCPIT } from '@swgemu/core';
+import type { CPITData } from '@swgemu/core';
 import {
     isDraftSchematic,
     findLuaFile,
@@ -32,11 +34,17 @@ class IFFEditorDocument implements vscode.CustomDocument {
     public targetTemplateData: any = null;
     private workspaceRoot: string = '';
 
+    // Cockpit-specific data
+    public isCockpit: boolean = false;
+    public cockpitData: CPITData | null = null;
+    public rawBytes: Uint8Array;
+
     constructor(
         public readonly uri: vscode.Uri,
         initialData: Uint8Array,
         workspaceRoot: string
     ) {
+        this.rawBytes = initialData;
         this.iffDoc = parseIFF(initialData);
         this.workspaceRoot = workspaceRoot;
 
@@ -49,6 +57,16 @@ class IFFEditorDocument implements vscode.CustomDocument {
 
             // Parse schematic data from both sources
             this.loadSchematicData();
+        }
+
+        // Check if this is a cockpit (CPIT) file
+        if (this.iffDoc.root.formName === 'CPIT') {
+            this.isCockpit = true;
+            try {
+                this.cockpitData = parseCPIT(initialData);
+            } catch (e) {
+                console.error('Failed to parse CPIT:', e);
+            }
         }
     }
 
@@ -149,9 +167,17 @@ class IFFEditorDocument implements vscode.CustomDocument {
     }
 
     public reload(data: Uint8Array): void {
+        this.rawBytes = data;
         this.iffDoc = parseIFF(data);
         if (this.isSchematic) {
             this.loadSchematicData();
+        }
+        if (this.isCockpit) {
+            try {
+                this.cockpitData = parseCPIT(data);
+            } catch (e) {
+                console.error('Failed to parse CPIT on reload:', e);
+            }
         }
     }
 
@@ -355,7 +381,32 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                     // Copy file to working folder and open it
                     this.handleCopyToWorkingFolder(document, e.targetPath, webviewPanel);
                     break;
+
+                case 'updateCockpit':
+                    // Update cockpit data and rebuild IFF
+                    this.handleCockpitUpdate(document, e.data, webviewPanel);
+                    break;
             }
+        });
+    }
+
+    private handleCockpitUpdate(
+        document: IFFEditorDocument,
+        cpitData: CPITData,
+        webviewPanel: vscode.WebviewPanel
+    ): void {
+        document.cockpitData = cpitData;
+        // Rebuild the raw IFF bytes from the CPIT data
+        const newBytes = serializeCPIT(cpitData);
+        document.rawBytes = newBytes;
+        // Re-parse the IFF tree so tree view stays in sync
+        document.iffDoc = parseIFF(newBytes);
+        // Fire the change event so VSCode shows the dirty dot
+        this._onDidChangeCustomDocument.fire({
+            document,
+            undo: () => {},
+            redo: () => {},
+            label: 'Edit Cockpit'
         });
     }
 
@@ -458,7 +509,10 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             // Schematic-specific data
             isSchematic: document.isSchematic,
             schematicData: document.schematicData,
-            luaPath: document.luaPath
+            luaPath: document.luaPath,
+            // Cockpit-specific data
+            isCockpit: document.isCockpit,
+            cockpitData: document.cockpitData
         };
     }
 
@@ -1117,7 +1171,8 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         document: IFFEditorDocument,
         _cancellation: vscode.CancellationToken
     ): Promise<void> {
-        const data = serializeIFF(document.iffDoc);
+        // Cockpit files use rawBytes (serialized from CPITData) for lossless save
+        const data = document.isCockpit ? document.rawBytes : serializeIFF(document.iffDoc);
         await vscode.workspace.fs.writeFile(document.uri, data);
     }
 
@@ -1126,7 +1181,7 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         destination: vscode.Uri,
         _cancellation: vscode.CancellationToken
     ): Promise<void> {
-        const data = serializeIFF(document.iffDoc);
+        const data = document.isCockpit ? document.rawBytes : serializeIFF(document.iffDoc);
         await vscode.workspace.fs.writeFile(destination, data);
     }
 
@@ -1876,6 +1931,22 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             color: var(--vscode-testing-iconFailed, #f44747);
         }
 
+        /* Cockpit Tab Styles */
+        .cpit-section { margin-bottom: 16px; border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 10px 14px; }
+        .cpit-heading { font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--vscode-descriptionForeground); text-transform: uppercase; letter-spacing: 0.5px; }
+        .cpit-field { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .cpit-field label { min-width: 50px; font-weight: 500; }
+        .cpit-text { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, #444); padding: 4px 8px; border-radius: 3px; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; width: 360px; }
+        .cpit-num { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, #444); padding: 4px 8px; border-radius: 3px; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; width: 100px; text-align: right; }
+        .cpit-text:disabled, .cpit-num:disabled { opacity: 0.5; }
+        .cpit-offset-row { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+        .cpit-offset-row label { min-width: 16px; font-weight: 600; text-align: right; }
+        .cpit-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 3px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+        .cpit-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
+        .cpit-btn:disabled { opacity: 0.4; cursor: default; }
+        .cpit-zoom-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .cpit-zoom-row label { min-width: 60px; font-weight: 500; color: var(--vscode-descriptionForeground); font-size: 12px; }
+
         /* Schematic Tab Styles */
         .schematic-container {
             display: flex;
@@ -2288,6 +2359,7 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
         <button class="tab" data-tab="tree">Tree View</button>
         <button class="tab" data-tab="properties">All Properties</button>
         <button class="tab hidden" data-tab="schematic" id="schematic-tab-btn">Schematic</button>
+        <button class="tab hidden" data-tab="cockpit" id="cockpit-tab-btn">Cockpit</button>
     </div>
 
     <div id="tree-tab" class="tab-content">
@@ -2390,6 +2462,63 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             <div id="experimental-errors" class="schematic-section hidden">
                 <h3>Experimental Property Warnings</h3>
                 <div id="experimental-errors-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cockpit-tab" class="tab-content">
+        <div style="max-width:600px;padding:8px 0;">
+            <div class="cpit-section">
+                <h3 class="cpit-heading">Frame Appearance</h3>
+                <div class="cpit-field">
+                    <label>Path:</label>
+                    <input type="text" id="cpit-frame" class="cpit-text" placeholder="appearance/ship_cockpit.apt">
+                </div>
+            </div>
+            <div class="cpit-section">
+                <h3 class="cpit-heading">Zoom Levels</h3>
+                <div id="cpit-zoom-list"></div>
+                <div style="margin-top:8px;display:flex;gap:8px;">
+                    <button class="cpit-btn" id="cpit-add-zoom">+ Add</button>
+                    <button class="cpit-btn" id="cpit-rm-zoom">- Remove</button>
+                </div>
+            </div>
+            <div class="cpit-section">
+                <h3 class="cpit-heading">First Person Zoom (Default)</h3>
+                <div class="cpit-field">
+                    <label>Zoom:</label>
+                    <input type="number" id="cpit-fpzoom" class="cpit-num" step="0.1">
+                </div>
+            </div>
+            <div class="cpit-section">
+                <h3 class="cpit-heading">Third Person Camera Offset (3OFF)</h3>
+                <div class="cpit-offset-row">
+                    <label>X:</label><input type="number" id="cpit-tp-x" class="cpit-num" step="0.1">
+                    <label>Y:</label><input type="number" id="cpit-tp-y" class="cpit-num" step="0.1">
+                    <label>Z:</label><input type="number" id="cpit-tp-z" class="cpit-num" step="0.1">
+                </div>
+            </div>
+            <div class="cpit-section">
+                <h3 class="cpit-heading">First Person Camera Offset (1OFF)</h3>
+                <div class="cpit-offset-row">
+                    <label>X:</label><input type="number" id="cpit-fp-x" class="cpit-num" step="0.1">
+                    <label>Y:</label><input type="number" id="cpit-fp-y" class="cpit-num" step="0.1">
+                    <label>Z:</label><input type="number" id="cpit-fp-z" class="cpit-num" step="0.1">
+                </div>
+            </div>
+            <div class="cpit-section">
+                <h3 class="cpit-heading">Hyperspace — POB Ships (ISPB)</h3>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <input type="checkbox" id="cpit-hyper-on" style="width:16px;height:16px;">
+                    <label for="cpit-hyper-on">Enable hyperspace parameters</label>
+                </div>
+                <div id="cpit-hyper-fields" style="display:none">
+                    <div class="cpit-offset-row">
+                        <label>X:</label><input type="number" id="cpit-hy-x" class="cpit-num" step="0.1">
+                        <label>Y:</label><input type="number" id="cpit-hy-y" class="cpit-num" step="0.1">
+                        <label>Z:</label><input type="number" id="cpit-hy-z" class="cpit-num" step="0.1">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -3017,8 +3146,21 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
                 document.getElementById('schematic-tab-btn').classList.add('hidden');
             }
 
+            // Handle cockpit tab visibility and rendering
+            if (data.isCockpit && data.cockpitData) {
+                document.getElementById('cockpit-tab-btn').classList.remove('hidden');
+                renderCockpit(data.cockpitData, !data.isEditable);
+                // Default to cockpit tab for CPIT files
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('cockpit-tab-btn').classList.add('active');
+                document.getElementById('cockpit-tab').classList.add('active');
+            } else {
+                document.getElementById('cockpit-tab-btn').classList.add('hidden');
+            }
+
             // For non-IFF files (appearance types), default to Tree View tab
-            if (data.properties.length === 0 && !data.isSchematic) {
+            if (data.properties.length === 0 && !data.isSchematic && !data.isCockpit) {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 document.querySelector('.tab[data-tab="tree"]').classList.add('active');
@@ -3294,6 +3436,139 @@ export class IFFEditorProvider implements vscode.CustomEditorProvider<IFFEditorD
             // Energy
             'energy': ['PE', 'OQ']
         };
+
+        // ── Cockpit rendering ─────────────────────────────────────
+        var cpitLocal = null;
+        var cpitReadOnly = true;
+
+        function renderCockpit(cd, ro) {
+            cpitLocal = JSON.parse(JSON.stringify(cd));
+            cpitReadOnly = ro;
+
+            document.getElementById('cpit-frame').value = cpitLocal.frame || '';
+            document.getElementById('cpit-fpzoom').value = cpitLocal.firstPersonZoom;
+            document.getElementById('cpit-tp-x').value = cpitLocal.thirdPersonOffset.x;
+            document.getElementById('cpit-tp-y').value = cpitLocal.thirdPersonOffset.y;
+            document.getElementById('cpit-tp-z').value = cpitLocal.thirdPersonOffset.z;
+            document.getElementById('cpit-fp-x').value = cpitLocal.firstPersonOffset.x;
+            document.getElementById('cpit-fp-y').value = cpitLocal.firstPersonOffset.y;
+            document.getElementById('cpit-fp-z').value = cpitLocal.firstPersonOffset.z;
+
+            var hasHyper = !!cpitLocal.hyperspace;
+            document.getElementById('cpit-hyper-on').checked = hasHyper;
+            document.getElementById('cpit-hyper-fields').style.display = hasHyper ? '' : 'none';
+            if (hasHyper) {
+                document.getElementById('cpit-hy-x').value = cpitLocal.hyperspace.x;
+                document.getElementById('cpit-hy-y').value = cpitLocal.hyperspace.y;
+                document.getElementById('cpit-hy-z').value = cpitLocal.hyperspace.z;
+            }
+
+            buildCpitZoomList();
+            applyCpitReadOnly();
+        }
+
+        function buildCpitZoomList() {
+            var container = document.getElementById('cpit-zoom-list');
+            container.innerHTML = '';
+            if (!cpitLocal) return;
+            for (var i = 0; i < cpitLocal.zoomLevels.length; i++) {
+                var row = document.createElement('div');
+                row.className = 'cpit-zoom-row';
+                var lbl = document.createElement('label');
+                lbl.textContent = 'Level ' + (i + 1) + ':';
+                var inp = document.createElement('input');
+                inp.type = 'number';
+                inp.step = '0.1';
+                inp.className = 'cpit-num';
+                inp.value = cpitLocal.zoomLevels[i];
+                if (cpitReadOnly) inp.disabled = true;
+                (function(idx, el) {
+                    el.addEventListener('change', function() {
+                        cpitLocal.zoomLevels[idx] = parseFloat(el.value) || 0;
+                        sendCpitChange();
+                    });
+                })(i, inp);
+                row.appendChild(lbl);
+                row.appendChild(inp);
+                container.appendChild(row);
+            }
+        }
+
+        function applyCpitReadOnly() {
+            var tab = document.getElementById('cockpit-tab');
+            if (!tab) return;
+            tab.querySelectorAll('input').forEach(function(el) { el.disabled = cpitReadOnly; });
+            tab.querySelectorAll('.cpit-btn').forEach(function(el) { el.disabled = cpitReadOnly; el.style.opacity = cpitReadOnly ? '0.4' : '1'; });
+        }
+
+        function sendCpitChange() {
+            if (cpitReadOnly || !cpitLocal) return;
+            vscode.postMessage({ type: 'updateCockpit', data: JSON.parse(JSON.stringify(cpitLocal)) });
+        }
+
+        // Cockpit event listeners (safe even when elements are initially hidden)
+        document.getElementById('cpit-frame').addEventListener('change', function() {
+            if (!cpitLocal || cpitReadOnly) return;
+            cpitLocal.frame = this.value;
+            sendCpitChange();
+        });
+        document.getElementById('cpit-fpzoom').addEventListener('change', function() {
+            if (!cpitLocal || cpitReadOnly) return;
+            cpitLocal.firstPersonZoom = parseFloat(this.value) || 0;
+            sendCpitChange();
+        });
+        ['cpit-tp-x','cpit-tp-y','cpit-tp-z'].forEach(function(id) {
+            document.getElementById(id).addEventListener('change', function() {
+                if (!cpitLocal || cpitReadOnly) return;
+                var axis = id.split('-')[2];
+                cpitLocal.thirdPersonOffset[axis] = parseFloat(this.value) || 0;
+                sendCpitChange();
+            });
+        });
+        ['cpit-fp-x','cpit-fp-y','cpit-fp-z'].forEach(function(id) {
+            document.getElementById(id).addEventListener('change', function() {
+                if (!cpitLocal || cpitReadOnly) return;
+                var axis = id.split('-')[2];
+                cpitLocal.firstPersonOffset[axis] = parseFloat(this.value) || 0;
+                sendCpitChange();
+            });
+        });
+        document.getElementById('cpit-hyper-on').addEventListener('change', function() {
+            if (!cpitLocal || cpitReadOnly) return;
+            if (this.checked) {
+                cpitLocal.hyperspace = { x: 0, y: 0, z: 0 };
+                document.getElementById('cpit-hyper-fields').style.display = '';
+                document.getElementById('cpit-hy-x').value = 0;
+                document.getElementById('cpit-hy-y').value = 0;
+                document.getElementById('cpit-hy-z').value = 0;
+            } else {
+                delete cpitLocal.hyperspace;
+                document.getElementById('cpit-hyper-fields').style.display = 'none';
+            }
+            applyCpitReadOnly();
+            sendCpitChange();
+        });
+        ['cpit-hy-x','cpit-hy-y','cpit-hy-z'].forEach(function(id) {
+            document.getElementById(id).addEventListener('change', function() {
+                if (!cpitLocal || cpitReadOnly || !cpitLocal.hyperspace) return;
+                var axis = id.split('-')[2];
+                cpitLocal.hyperspace[axis] = parseFloat(this.value) || 0;
+                sendCpitChange();
+            });
+        });
+        document.getElementById('cpit-add-zoom').addEventListener('click', function() {
+            if (!cpitLocal || cpitReadOnly) return;
+            var last = cpitLocal.zoomLevels.length > 0 ? cpitLocal.zoomLevels[cpitLocal.zoomLevels.length - 1] : 0;
+            cpitLocal.zoomLevels.push(last + 4);
+            buildCpitZoomList();
+            sendCpitChange();
+        });
+        document.getElementById('cpit-rm-zoom').addEventListener('click', function() {
+            if (!cpitLocal || cpitReadOnly || cpitLocal.zoomLevels.length === 0) return;
+            cpitLocal.zoomLevels.pop();
+            buildCpitZoomList();
+            sendCpitChange();
+        });
 
         function renderSchematic(data) {
             if (!data.schematicData) {

@@ -160,6 +160,10 @@ export class ILFViewerProvider implements vscode.CustomEditorProvider<ILFDocumen
                     if (readOnly) return;
                     this.applyRotation(document, msg.index, msg.yaw, msg.pitch, msg.roll);
                     break;
+                case 'importFile':
+                    if (readOnly) return;
+                    this.handleImportFile(document, webviewPanel);
+                    break;
             }
         });
 
@@ -305,6 +309,67 @@ export class ILFViewerProvider implements vscode.CustomEditorProvider<ILFDocumen
         document.data.cells = Array.from(cellSet).sort();
     }
 
+    private objectToNode(obj: { templatePath: string; cellName: string; posX: number; posY: number; posZ: number; quatW: number; quatX: number; quatY: number; quatZ: number }): ILFNode {
+        const { quatW: w, quatX: x, quatY: y, quatZ: z } = obj;
+        const xx = x * x, yy = y * y, zz = z * z;
+        const xy = x * y, xz = x * z, yz = y * z;
+        const wx = w * x, wy = w * y, wz = w * z;
+        return {
+            templatePath: obj.templatePath,
+            cellName: obj.cellName,
+            transform: [
+                [1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy)],
+                [2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx)],
+                [2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy)],
+                [obj.posX, obj.posY, obj.posZ],
+            ],
+            posX: obj.posX, posY: obj.posY, posZ: obj.posZ,
+            quatW: w, quatX: x, quatY: y, quatZ: z,
+        };
+    }
+
+    private async handleImportFile(document: ILFDocument, panel: vscode.WebviewPanel): Promise<void> {
+        const uris = await vscode.window.showOpenDialog({
+            canSelectMany: false,
+            filters: { 'JSON Files': ['json'] },
+            title: 'Import Room Capture JSON',
+        });
+        if (!uris || uris.length === 0) return;
+
+        try {
+            const raw = fs.readFileSync(uris[0].fsPath, 'utf-8');
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) {
+                vscode.window.showErrorMessage('Import file must contain a JSON array');
+                return;
+            }
+
+            let imported = 0;
+            for (const obj of arr) {
+                if (!obj.templatePath || obj.posX === undefined) continue;
+                const node = this.objectToNode({
+                    templatePath: obj.templatePath,
+                    cellName: obj.cellName || document.data.cells[0] || 'cell',
+                    posX: obj.posX ?? 0, posY: obj.posY ?? 0, posZ: obj.posZ ?? 0,
+                    quatW: obj.quatW ?? 1, quatX: obj.quatX ?? 0, quatY: obj.quatY ?? 0, quatZ: obj.quatZ ?? 0,
+                });
+                document.data.nodes.push(node);
+                imported++;
+            }
+
+            if (imported > 0) {
+                this.updateCells(document);
+                this.markDirty(document);
+                this.sendNodes(document, panel);
+                vscode.window.showInformationMessage(`Imported ${imported} objects from room capture`);
+            } else {
+                vscode.window.showWarningMessage('No valid objects found in the import file');
+            }
+        } catch (e: any) {
+            vscode.window.showErrorMessage('Failed to parse import file: ' + e.message);
+        }
+    }
+
     // =========================================================================
     // WEBVIEW HTML
     // =========================================================================
@@ -390,6 +455,7 @@ export class ILFViewerProvider implements vscode.CustomEditorProvider<ILFDocumen
         L.push('  <span class="badge" id="nodeCount"></span>');
         L.push('  <span class="badge" id="cellCount"></span>');
         L.push('  <button class="tbtn" id="btnFilter" title="Toggle object filter">Filter</button>');
+        L.push('  <button class="tbtn" id="btnImport" title="Import room capture JSON">Import</button>');
         L.push('</div>');
         L.push('<div class="readonly-bar" id="readonlyBar"><span class="ro-msg">This file is read-only. Edit a copy in the working folder to make changes.</span><button class="ro-btn" id="btnEditWorking">Edit in Working</button></div>');
         L.push('<div class="legend" id="legend"></div>');
@@ -695,6 +761,7 @@ export class ILFViewerProvider implements vscode.CustomEditorProvider<ILFDocumen
         L.push('  this.classList.toggle("active",filterDrawerOpen);');
         L.push('});');
         L.push('document.getElementById("btnEditWorking").addEventListener("click",function(){vscodeApi.postMessage({type:"editInWorking"});});');
+        L.push('document.getElementById("btnImport").addEventListener("click",function(){if(readOnly)return;vscodeApi.postMessage({type:"importFile"});});');
         L.push('var ftTimer=null;');
         L.push('filterInput.addEventListener("input",function(){if(ftTimer)clearTimeout(ftTimer);ftTimer=setTimeout(function(){buildFilterTree();},150);});');
         L.push('');
@@ -823,6 +890,7 @@ export class ILFViewerProvider implements vscode.CustomEditorProvider<ILFDocumen
         L.push('    allNodes=msg.nodes;cells=msg.cells;');
         L.push('    readOnly=!!msg.readOnly;');
         L.push('    document.getElementById("readonlyBar").classList.toggle("visible",readOnly);');
+        L.push('    document.getElementById("btnImport").disabled=readOnly;document.getElementById("btnImport").style.opacity=readOnly?"0.4":"1";');
         L.push('    assignColors(cells);buildLegend();buildFilterTree();');
         L.push('    if(selectedIdx<0){resizeCanvas();fitToView();}');
         L.push('    draw();');

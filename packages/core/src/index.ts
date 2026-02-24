@@ -23,5 +23,7 @@ export { parseSFP, serializeSFP, generateSFP } from './sfp';
 export type { SfpData, SfpCell } from './sfp';
 export { parseILF, serializeILF } from './ilf';
 export type { ILFData, ILFNode } from './ilf';
+export { parseCPIT, serializeCPIT } from './cpit';
+export type { CPITData, CPITOffset } from './cpit';
 export { parseLAY, serializeLAY, serializeLAYUnwrapped, createWalkwayLAY, createCircleLAY } from './lay';
 export type { LAYData, RawGroupData, ShaderFamily, ShaderChild, FloraFamily, FloraChild, RadialFamily, RadialChild, EnvironmentEntry, MapFamily, LAYLayer, LAYBoundary, BoundaryCircle, BoundaryRectangle, BoundaryPolygon, BoundaryPolyline, Point2D, LAYAffector, AffectorHeightConstant, AffectorShaderConstant, AffectorFloraNonCollidableConstant, AffectorNoncollideFloraConstant, AffectorRadialConstant, AffectorRadialFarConstant, AffectorEnvironment, AffectorExclude, AffectorPassable, AffectorHeightTerrace, AffectorHeightFractal, AffectorColorConstant, AffectorColorRampHeight, AffectorColorRampFractal, AffectorRoad, AffectorRiver, AffectorShaderReplace, AffectorFCN, AffectorRCN, AffectorGeneric, LAYFilter, FilterGeneric } from './lay';

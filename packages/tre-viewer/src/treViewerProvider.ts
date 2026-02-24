@@ -116,15 +116,9 @@ export class TREViewerProvider implements vscode.CustomReadonlyEditorProvider<TR
                 }
             }
 
-            const files = c.files.map(f => ({
-                path: f.path,
-                uncompressedSize: f.uncompressedSize,
-                compressedSize: f.compressedSize,
-                compressed: f.compressionType === 2
-            }));
-
+            // Send header first (no file array)
             panel.webview.postMessage({
-                type: 'data',
+                type: 'header',
                 fileName,
                 version: c.header.version,
                 fileCount: c.header.recordCount,
@@ -132,8 +126,27 @@ export class TREViewerProvider implements vscode.CustomReadonlyEditorProvider<TR
                 archiveSize: c.archiveSize,
                 totalUncompressed: c.totalUncompressedSize,
                 totalCompressed: c.totalCompressedSize,
-                files
             });
+
+            // Send files in chunks to avoid hanging the webview IPC
+            const CHUNK_SIZE = 5000;
+            const allFiles = c.files.map(f => ({
+                path: f.path,
+                uncompressedSize: f.uncompressedSize,
+                compressedSize: f.compressedSize,
+                compressed: f.compressionType === 2
+            }));
+
+            for (let i = 0; i < allFiles.length; i += CHUNK_SIZE) {
+                const chunk = allFiles.slice(i, i + CHUNK_SIZE);
+                panel.webview.postMessage({ type: 'chunk', files: chunk });
+                // Yield to event loop between chunks
+                if (i + CHUNK_SIZE < allFiles.length) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
+            }
+
+            panel.webview.postMessage({ type: 'done' });
         } catch (err: any) {
             panel.webview.postMessage({
                 type: 'error',
@@ -274,6 +287,7 @@ export class TREViewerProvider implements vscode.CustomReadonlyEditorProvider<TR
         lines.push('(function() {');
         lines.push('var vscodeApi = acquireVsCodeApi();');
         lines.push('var allFiles = [];');
+        lines.push('var expectedCount = 0;');
         lines.push('var rootNode = null;');
         lines.push('var expanded = {};');
         lines.push('var isFiltering = false;');
@@ -369,7 +383,10 @@ export class TREViewerProvider implements vscode.CustomReadonlyEditorProvider<TR
         lines.push('');
         lines.push('  var totalFileCount = 0;');
         lines.push('  for (var i = 0; i < rows.length; i++) { if (rows[i].type === "file") totalFileCount++; }');
-        lines.push('  matchCount.textContent = isFiltering ? (totalFileCount + " of " + allFiles.length + " files") : (allFiles.length + " files");');
+        lines.push('  var ROW_CAP = 2000;');
+        lines.push('  var capped = rows.length > ROW_CAP;');
+        lines.push('  if (capped) rows = rows.slice(0, ROW_CAP);');
+        lines.push('  matchCount.textContent = isFiltering ? (totalFileCount + " of " + allFiles.length + " files" + (capped ? " (showing first " + ROW_CAP + " rows)" : "")) : (allFiles.length + " files");');
         lines.push('');
         lines.push('  treeContainer.innerHTML = "";');
         lines.push('  if (rows.length === 0) {');
@@ -464,6 +481,12 @@ export class TREViewerProvider implements vscode.CustomReadonlyEditorProvider<TR
         lines.push('    frag.appendChild(row);');
         lines.push('  }');
         lines.push('  treeContainer.appendChild(frag);');
+        lines.push('  if (capped) {');
+        lines.push('    var capMsg = document.createElement("div");');
+        lines.push('    capMsg.className = "loading";');
+        lines.push('    capMsg.textContent = "Showing " + ROW_CAP + " of " + totalFileCount + " rows. Narrow your search to see more.";');
+        lines.push('    treeContainer.appendChild(capMsg);');
+        lines.push('  }');
         lines.push('}');
         lines.push('');
         // Filter logic
@@ -504,13 +527,19 @@ export class TREViewerProvider implements vscode.CustomReadonlyEditorProvider<TR
         // Message handler
         lines.push('window.addEventListener("message", function(event) {');
         lines.push('  var msg = event.data;');
-        lines.push('  if (msg.type === "data") {');
+        lines.push('  if (msg.type === "header") {');
         lines.push('    document.getElementById("treName").textContent = msg.fileName;');
         lines.push('    document.getElementById("treVersion").textContent = "v" + msg.version;');
         lines.push('    document.getElementById("treFiles").textContent = msg.fileCount.toLocaleString() + " files";');
         lines.push('    document.getElementById("treFolders").textContent = msg.folderCount.toLocaleString() + " folders";');
         lines.push('    document.getElementById("treSize").textContent = formatSize(msg.archiveSize) + " archive / " + formatSize(msg.totalUncompressed) + " uncompressed";');
-        lines.push('    allFiles = msg.files;');
+        lines.push('    allFiles = [];');
+        lines.push('    expectedCount = msg.fileCount;');
+        lines.push('    treeContainer.innerHTML = "<div class=\\"loading\\">Loading 0 / " + expectedCount.toLocaleString() + " files...</div>";');
+        lines.push('  } else if (msg.type === "chunk") {');
+        lines.push('    for (var i = 0; i < msg.files.length; i++) allFiles.push(msg.files[i]);');
+        lines.push('    treeContainer.innerHTML = "<div class=\\"loading\\">Loading " + allFiles.length.toLocaleString() + " / " + expectedCount.toLocaleString() + " files...</div>";');
+        lines.push('  } else if (msg.type === "done") {');
         lines.push('    isFiltering = false;');
         lines.push('    expanded = {};');
         lines.push('    rootNode = buildTree(allFiles);');
