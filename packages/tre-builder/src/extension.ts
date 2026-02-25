@@ -5,7 +5,7 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('TRE Builder extension activated');
 
     // Register the webview provider for the sidebar
-    const provider = new TREBuilderProvider(context.extensionUri);
+    const provider = new TREBuilderProvider(context);
 
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('treBuilderFiles', provider)

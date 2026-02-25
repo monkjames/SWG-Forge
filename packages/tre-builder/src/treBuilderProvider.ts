@@ -18,8 +18,25 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
     private _files: FileInfo[] = [];
     private _validationResults: ValidationResult[] = [];
     private _isBuilding: boolean = false;
+    private readonly _extensionUri: vscode.Uri;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    private static readonly OUTPUT_PATH_KEY = 'treBuilder.lastOutputPath';
+    private static readonly DEFAULT_OUTPUT = 'tre4/infinity_wicked1.tre';
+
+    constructor(private readonly _context: vscode.ExtensionContext) {
+        this._extensionUri = _context.extensionUri;
+    }
+
+    private getOutputPath(): string {
+        return this._context.globalState.get<string>(
+            TREBuilderProvider.OUTPUT_PATH_KEY,
+            TREBuilderProvider.DEFAULT_OUTPUT
+        );
+    }
+
+    private async setOutputPath(value: string): Promise<void> {
+        await this._context.globalState.update(TREBuilderProvider.OUTPUT_PATH_KEY, value);
+    }
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -55,6 +72,9 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'fixCRC':
                     this.fixCRC();
+                    break;
+                case 'setOutputPath':
+                    this.setOutputPath(message.path);
                     break;
             }
         });
@@ -108,9 +128,8 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
                 return;
             }
 
-            // Get output path from config
-            const config = vscode.workspace.getConfiguration('treBuilder');
-            const outputPath = config.get<string>('outputPath', 'tre4/infinity_wicked_special.tre');
+            // Get output path from persisted state
+            const outputPath = this.getOutputPath();
             const fullOutputPath = path.join(workspaceFolder, outputPath);
 
             // Ensure output directory exists
@@ -127,7 +146,8 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
 
             // Build the TRE
             const writer = new TREWriter();
-            const workingFolder = path.join(workspaceFolder, config.get<string>('workingFolder', 'tre/working'));
+            const workingConfig = vscode.workspace.getConfiguration('treBuilder');
+            const workingFolder = path.join(workspaceFolder, workingConfig.get<string>('workingFolder', 'tre/working'));
 
             await writer.build(workingFolder, fullOutputPath, (status) => {
                 this._postMessage({ type: 'buildStatus', status });
@@ -413,8 +433,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlContent(): string {
-        const config = vscode.workspace.getConfiguration('treBuilder');
-        const outputPath = config.get<string>('outputPath', 'tre4/infinity_wicked_special.tre');
+        const outputPath = this.getOutputPath();
 
         const lines: string[] = [
             '<!DOCTYPE html>',
@@ -426,7 +445,8 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
             '<style>',
             '  body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); padding: 0; margin: 0; }',
             '  .header { padding: 10px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); }',
-            '  .target { font-size: 11px; opacity: 0.8; margin-bottom: 8px; }',
+            '  .target { font-size: 11px; opacity: 0.8; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }',
+            '  .target-input { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, #444); padding: 3px 6px; border-radius: 3px; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; flex: 1; min-width: 0; }',
             '  .stats { font-size: 12px; display: flex; gap: 12px; }',
             '  .stat { opacity: 0.7; }',
             '  .buttons { display: flex; gap: 6px; margin-top: 10px; }',
@@ -465,7 +485,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
             '</head>',
             '<body>',
             '<div class="header">',
-            '  <div class="target">Target: <strong>' + outputPath + '</strong></div>',
+            '  <div class="target"><span>Target:</span> <input type="text" class="target-input" id="outputPath" value="' + outputPath.replace(/"/g, '&quot;') + '"></div>',
             '  <div class="stats">',
             '    <span class="stat" id="fileCount">Files: 0</span>',
             '    <span class="stat" id="totalSize">Size: 0 KB</span>',
@@ -498,6 +518,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
             'let sectionsCollapsed = { files: false, validations: false };',
             'let collapsedDirs = {};',
             '',
+            'document.getElementById("outputPath").addEventListener("change", function() { vscode.postMessage({ command: "setOutputPath", path: this.value.trim() }); });',
             'function build() { vscode.postMessage({ command: "build" }); }',
             'function forceBuild() { vscode.postMessage({ command: "forceBuild" }); }',
             'function fixCRC() { vscode.postMessage({ command: "fixCRC" }); }',
