@@ -155,3 +155,78 @@ Given a building template (POB IFF from TRE), produce a visual cell-by-cell plan
 - ✅ Cell geometry: Using default 40x40 bounds (collision parsing can be enhanced later)
 - ✅ Visual fidelity: 2D top-down grid view (sufficient for spawn placement)
 - ✅ Output format: Direct Lua screenplay generation (no intermediate format needed)
+
+---
+
+## Feb 26, 2026 — Brainstorm
+
+Ideas for where SWG Forge could go next. Nothing committed — just thinking out loud.
+
+### Lua Development Tools
+
+The biggest gap right now. We have great binary editors but Lua authoring is still raw text.
+
+- **Lua Intellisense for SWGEmu** — Autocomplete for `SceneObject`, `CreatureObject`, `BuildingObject` methods. Parse the C++ Lua bindings to generate type stubs automatically. Would massively speed up screenplay writing.
+- **Template Cross-Reference Viewer** — Given any object (IFF path, Lua template, or CRC), show everything that references it: loot groups, spawn lists, schematic ingredients, screenplay spawns, quest rewards. Answer "where is this thing used?" in one click.
+- **Screenplay Validator** — Static analysis for common Lua mistakes: missing `registerScreenPlay`, observers that never get removed, `createLoot` calls referencing non-existent loot groups, spawn templates that don't exist in serverobjects.lua.
+- **Loot Table Editor** — Visual tree editor for loot groups/items. Currently these are deeply nested Lua tables that are painful to navigate. Show drop rates, item previews, group hierarchies. Drag-and-drop to reorganize.
+
+### Integrity & Validation
+
+Catch problems before they hit the server.
+
+- **CRC Conflict Detector** — Scan the CRC table for hash collisions (different paths, same CRC). Also flag IFF files that exist on disk but aren't in the CRC table, and CRC entries pointing to missing files.
+- **Orphan File Finder** — Find IFFs not registered in any CRC table, Lua templates not included in any `serverobjects.lua`, STF keys that nothing references, appearance chains with broken links.
+- **Template Field Validator** — Check that Lua object templates have all required fields for their type. A `SharedWeaponObjectTemplate` without `attackType` silently breaks — catch that at edit time.
+- **Pre-Flight Check** — One-click "is my workspace clean?" that runs all validators. Show a report before you restart the server.
+
+### World & Spawn Management
+
+Tools for placing things in the world, not just inside buildings.
+
+- **World Map Spawn Viewer** — 2D planet map with spawn regions overlaid. Show creature density, faction territories, POI markers. Click a region to see what spawns there and edit spawn groups.
+- **Region Editor** — Visual editing of no-build zones, city boundaries, GCW regions. Currently these are coordinate lists in Lua — a map overlay would be much clearer.
+- **Outdoor NPC Planner** — Like Building NPC Planner but for open-world areas. Place spawns on a terrain heightmap, define patrol waypoints, set wander radii. Export to spawn manager Lua.
+- **Point of Interest (POI) Designer** — Define a POI area with spawns, loot containers, ambient NPCs, and boss encounters. Package it as a reusable screenplay that can be dropped at any world coordinates.
+
+### 3D Visualization
+
+The big leap. Currently everything is 2D schematics.
+
+- **Mesh Viewer** — WebGL viewer for MSH/MGN files inside VSCode. Even basic wireframe + texture would be valuable for verifying appearance chains without launching the client.
+- **POB Walkthrough** — 3D view of building interiors with cell connectivity. Walk through portals, see NPC placements from the Building NPC Planner in 3D context.
+- **Appearance Chain Preview** — In the object creation pipeline, show a 3D preview of what the object will look like before generating files. Would need MSH parsing + DDS texture mapping.
+
+### Content Pipeline Automation
+
+Reduce repetitive multi-step workflows to single operations.
+
+- **Batch Object Creator** — Create multiple variants of an object at once (e.g., 5 color variants of a piece of armor). Define a template + variation table, generate all TRE + Lua + CRC + STF in one pass.
+- **Loot Group Generator** — Given a set of items, auto-generate balanced loot groups with configurable drop rates. Wire them into existing loot tables or create new ones.
+- **Schematic Balancer** — Given a crafted item's stats, suggest ingredient types and quantities that make sense for the game's crafting economy. Reference existing schematics for baseline.
+- **Reverse Engineer from CRC** — Paste a CRC hex value, instantly find the object template path, its appearance chain, its Lua template, where it's used in loot/spawns/quests. Quick debugging tool.
+
+### Quest & Screenplay Authoring
+
+Visual tools for quest design instead of raw Lua.
+
+- **Quest Flow Editor** — Node-based visual editor for quest logic. Define stages, branching conditions, rewards, failure states. Export to screenplay Lua with proper state machine patterns.
+- **Conversation Tree Editor** — Visual editor for NPC conversation trees (ConversationScreen chains). Currently these are verbose Lua tables — a tree visualization with inline text editing would be much faster.
+- **Event Sequencer** — Timeline-based editor for scripted events (invasions, world bosses, seasonal events). Define spawn waves, timings, broadcast messages, reward phases. Export to screenplay.
+
+### Developer Experience
+
+Small tools that smooth out daily workflow.
+
+- **Object Browser** — Universal search across all object types. Type a name, see matching IFFs, Lua templates, CRC entries, STF strings, appearance files. One search bar to find anything.
+- **TRE Diff Viewer** — Compare `tre/working/` against `tre/vanilla/` or `tre/infinity/`. Show what's been added, modified, removed. Useful before packaging a TRE update.
+- **Server Log Viewer** — Tail and filter Core3 server logs inside VSCode. Highlight errors, link stack traces to source files, filter by system (combat, crafting, housing, space).
+- **Quick Spawn Command** — Right-click any creature/object template → copy the `/createcreature` or `/createitem` command to clipboard. Small but saves constant lookups.
+
+### Data Analysis & Balance
+
+Tools for understanding and tuning game systems.
+
+- **Combat Simulator** — Input attacker/defender stats, run combat math (from C++ formulas), show DPS, time-to-kill, mitigation breakdown. For balancing encounters without live testing.
+- **Economy Analyzer** — Map crafting chains: raw resources → components → final items. Show resource bottlenecks, compare schematic costs, identify balance outliers.
+- **Creature Stat Browser** — Searchable/sortable table of all creatures with their stats, loot, spawn locations. Quick reference for content design.
