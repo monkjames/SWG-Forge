@@ -173,12 +173,15 @@ export function serializeCRCTable(table: CRCTable): Uint8Array {
         4 + 4 + stngSize
     );
 
+    // outerContentSize = everything after the outer FORM's size field:
+    //   'CSTB' name (4) + inner FORM tag (4) + inner size (4) + '0000' name (4) + chunks
     const outerContentSize = (
-        4 + 4 + 4 +
+        4 +                    // 'CSTB' form name
+        4 + 4 + 4 +           // inner FORM header: tag + size + '0000'
         innerContentSize
     );
 
-    const totalSize = 4 + 4 + 4 + outerContentSize;
+    const totalSize = 4 + 4 + outerContentSize;
 
     const result = new Uint8Array(totalSize);
     const view = new DataView(result.buffer);
