@@ -45,6 +45,8 @@ export interface LAYData {
     mgrpRaw?: RawGroupData;
     /** Optional second MGRP (BitmapGroup) - stored as complete raw FORM */
     bitmapGroupRaw?: Uint8Array;
+    /** Whether the original file was wrapped in FORM TGEN > FORM 0000. Preserved for roundtrip. */
+    _wrapped?: boolean;
 }
 
 export interface ShaderFamily {
@@ -628,6 +630,7 @@ class BinaryWriter {
  */
 export function parseLAY(data: Uint8Array): LAYData {
     const r = new BinaryReader(data);
+    let wrapped = false;
 
     // Check if wrapped in FORM TGEN
     const firstTag = r.peekTag();
@@ -638,6 +641,7 @@ export function parseLAY(data: Uint8Array): LAYData {
         const outerType = r.readTag();
 
         if (outerType === 'TGEN') {
+            wrapped = true;
             // Skip version form: FORM 0000
             const vTag = r.readTag(); // 'FORM'
             const vSize = r.readSizeBE();
@@ -736,6 +740,7 @@ export function parseLAY(data: Uint8Array): LAYData {
         egrpRaw,
         mgrpRaw,
         bitmapGroupRaw,
+        _wrapped: wrapped,
     };
 }
 
@@ -1423,6 +1428,11 @@ function serializeLAYContent(w: BinaryWriter, lay: LAYData): void {
 }
 
 export function serializeLAY(lay: LAYData): Uint8Array {
+    // If original was unwrapped, serialize unwrapped to preserve format
+    if (lay._wrapped === false) {
+        return serializeLAYUnwrapped(lay);
+    }
+
     const inner = new BinaryWriter();
     serializeLAYContent(inner, lay);
     const innerBytes = inner.toUint8Array();

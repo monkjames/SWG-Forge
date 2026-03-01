@@ -45,7 +45,7 @@ export interface Light {
 }
 
 export interface CollisionExtent {
-    type: 'NULL' | 'CMSH' | 'EXBX' | 'EXSP' | 'XCYL' | 'UNKNOWN';
+    type: 'NULL' | 'CMSH' | 'EXBX' | 'EXSP' | 'XCYL' | 'CMPT' | 'UNKNOWN';
     rawNode?: IFFNode; // Full IFF subtree for round-trip serialization
 }
 
@@ -545,7 +545,7 @@ function parseCollision(cell0005: IFFNode): CollisionExtent {
         return { type: 'NULL' };
     }
 
-    const collisionTypes = ['NULL', 'CMSH', 'EXBX', 'EXSP', 'XCYL'] as const;
+    const collisionTypes = ['NULL', 'CMSH', 'EXBX', 'EXSP', 'XCYL', 'CMPT'] as const;
     for (const child of cell0005.children) {
         if (child.type === 'form') {
             const formName = child.formName;
@@ -892,22 +892,33 @@ export function serializePOB(pob: PobData): Uint8Array {
         versionChildren.push(makeForm('PGRF', [makeForm('0001', pgChildren)]));
     }
 
-    // CRC: serialize without CRC first, then compute and append
-    const root = makeForm('PRTO', [makeForm(version, versionChildren)]);
-    const withoutCrc = serializeIFF(root);
-    const crcValue = computePobCRC(withoutCrc);
-
-    const crcW = new BinaryWriter(4);
-    if (isV3) {
-        crcW.int32LE(crcValue);
+    // CRC: use original parsed value if available, otherwise recompute
+    if (pob.crc !== undefined) {
+        const crcW = new BinaryWriter(4);
+        if (isV3) {
+            crcW.int32LE(pob.crc);
+        } else {
+            crcW.int32BE(pob.crc);
+        }
+        versionChildren.push(makeChunk('CRC ', crcW.toUint8Array()));
+        const finalRoot = makeForm('PRTO', [makeForm(version, versionChildren)]);
+        return serializeIFF(finalRoot);
     } else {
-        crcW.int32BE(crcValue);
-    }
-    versionChildren.push(makeChunk('CRC ', crcW.toUint8Array()));
+        // No original CRC — serialize without, compute, then append
+        const root = makeForm('PRTO', [makeForm(version, versionChildren)]);
+        const withoutCrc = serializeIFF(root);
+        const crcValue = computePobCRC(withoutCrc);
 
-    // Final serialize
-    const finalRoot = makeForm('PRTO', [makeForm(version, versionChildren)]);
-    return serializeIFF(finalRoot);
+        const crcW = new BinaryWriter(4);
+        if (isV3) {
+            crcW.int32LE(crcValue);
+        } else {
+            crcW.int32BE(crcValue);
+        }
+        versionChildren.push(makeChunk('CRC ', crcW.toUint8Array()));
+        const finalRoot = makeForm('PRTO', [makeForm(version, versionChildren)]);
+        return serializeIFF(finalRoot);
+    }
 }
 
 /** CRC-32 using SWG's MPEG-2 polynomial (0x04C11DB7) */

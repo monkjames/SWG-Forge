@@ -44,6 +44,8 @@ export interface FloorData {
         minZ: number;
         maxZ: number;
     };
+    /** Preserved IFF children for roundtrip fidelity (nested FORMs, BEDG, etc.) */
+    _rawChildren?: IFFNode[];
 }
 
 /**
@@ -77,11 +79,15 @@ export function parseFLR(data: Uint8Array): FloorData {
     // Calculate bounds from vertices
     const bounds = calculateBounds(verts);
 
+    // Preserve all children of the version form for roundtrip fidelity
+    const _rawChildren = versionForm.children ? [...versionForm.children] : [];
+
     return {
         version,
         verts,
         tris,
-        bounds
+        bounds,
+        _rawChildren,
     };
 }
 
@@ -235,9 +241,18 @@ function makeForm(formName: string, children: IFFNode[]): IFFNode {
 }
 
 /**
- * Serialize FloorData to binary FLR format (version 0006)
+ * Serialize FloorData to binary FLR format.
+ * If _rawChildren are available (from parsing), uses them for perfect roundtrip.
+ * Otherwise rebuilds from parsed verts/tris data.
  */
 export function serializeFLR(floor: FloorData): Uint8Array {
+    // If we have preserved raw children, use them directly for perfect roundtrip
+    if (floor._rawChildren && floor._rawChildren.length > 0) {
+        const root = makeForm('FLOR', [makeForm(floor.version, floor._rawChildren)]);
+        return serializeIFF(root);
+    }
+
+    // Fallback: rebuild from parsed data
     // VERT chunk: count(int32 BE) + vertices (3 floats LE each)
     const vertSize = 4 + floor.verts.length * 12;
     const vertBuf = new ArrayBuffer(vertSize);
@@ -309,6 +324,6 @@ export function serializeFLR(floor: FloorData): Uint8Array {
         makeChunk('BEDG', new Uint8Array(bedgBuf)),
     ];
 
-    const root = makeForm('FLOR', [makeForm('0006', versionChildren)]);
+    const root = makeForm('FLOR', [makeForm(floor.version, versionChildren)]);
     return serializeIFF(root);
 }
