@@ -61,6 +61,11 @@ const STANDALONE_TOOLS: ForgeTool[] = [
         description: 'Generate complete walkway tile variants — LAY, SFP, IFF, Lua templates, CRC, and STF across all 5 object layers.',
         command: 'walkwayBuilder.open'
     },
+    {
+        name: 'Spawn Visualizer',
+        description: 'Visualize planet spawn maps — see creature distribution, find missing mobs, spot cross-planet errors, and drill into lairs and loot.',
+        command: 'spawnVisualizer.open'
+    },
 ];
 
 const SIDEBAR_TOOLS: ForgeTool[] = [
@@ -226,8 +231,8 @@ export class ForgeHub {
             catch { return null; }
         };
 
-        const ssp = forge.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts')!;
-        const scp = forge.get<string>('serverConfPath', 'infinity4.0.0/MMOCoreORB/bin/conf')!;
+        const ssp = forge.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts')!;
+        const scp = forge.get<string>('serverConfPath', 'infinity_wicked/MMOCoreORB/bin/conf')!;
         const csf = forge.get<string>('customScriptsFolder', 'custom_scripts')!;
         const twp = forge.get<string>('tre.workingPath', 'tre/working')!;
         const tvp = forge.get<string>('tre.vanillaPath', 'tre/vanilla')!;

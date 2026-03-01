@@ -26,4 +26,8 @@ export type { ILFData, ILFNode } from './ilf';
 export { parseCPIT, serializeCPIT } from './cpit';
 export type { CPITData, CPITOffset } from './cpit';
 export { parseLAY, serializeLAY, serializeLAYUnwrapped, createWalkwayLAY, createCircleLAY } from './lay';
+export { parseScreenplay, buildIndexEntry, createEmptyIndex, queryByPlanet, queryByCategory, getAllMobileTemplates } from './screenplay';
+export type { SpawnMobileEntry, SpawnObjectEntry, SpawnAreaEntry, PatrolWaypoint, PatrolRoute, CoordinateEntry, ScreenplayFile, ScreenplayCategory, ScreenplayIndexEntry, ScreenplayCacheEntry, ScreenplayIndexData } from './screenplay';
+export { parseWorldSnapshot, cellPositionsToJSON } from './world-snapshot';
+export type { CellPositionEntry, WorldSnapshotSummary } from './world-snapshot';
 export type { LAYData, RawGroupData, ShaderFamily, ShaderChild, FloraFamily, FloraChild, RadialFamily, RadialChild, EnvironmentEntry, MapFamily, LAYLayer, LAYBoundary, BoundaryCircle, BoundaryRectangle, BoundaryPolygon, BoundaryPolyline, Point2D, LAYAffector, AffectorHeightConstant, AffectorShaderConstant, AffectorFloraNonCollidableConstant, AffectorNoncollideFloraConstant, AffectorRadialConstant, AffectorRadialFarConstant, AffectorEnvironment, AffectorExclude, AffectorPassable, AffectorHeightTerrace, AffectorHeightFractal, AffectorColorConstant, AffectorColorRampHeight, AffectorColorRampFractal, AffectorRoad, AffectorRiver, AffectorShaderReplace, AffectorFCN, AffectorRCN, AffectorGeneric, LAYFilter, FilterGeneric } from './lay';
