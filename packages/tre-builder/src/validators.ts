@@ -22,7 +22,7 @@ export class Validator {
     constructor(workspaceFolder: string, scriptsPath?: string, customScriptsFolder?: string) {
         this.workspaceFolder = workspaceFolder;
         this.workingFolder = path.join(workspaceFolder, 'tre/working');
-        this.scriptsPath = path.join(workspaceFolder, scriptsPath || 'infinity4.0.0/MMOCoreORB/bin/scripts');
+        this.scriptsPath = path.join(workspaceFolder, scriptsPath || 'infinity_wicked/MMOCoreORB/bin/scripts');
         this.customScriptsFolder = customScriptsFolder || 'custom_scripts';
     }
 

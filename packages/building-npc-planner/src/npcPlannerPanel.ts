@@ -414,7 +414,7 @@ export class NpcPlannerPanel {
         }
 
         const config = vscode.workspace.getConfiguration('swgForge');
-        const scriptsPath = config.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts');
+        const scriptsPath = config.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts');
         const customScriptsFolder = config.get<string>('customScriptsFolder', 'custom_scripts');
 
         const screenplayDir = path.join(this._workspaceRoot, scriptsPath, customScriptsFolder, 'screenplays/caves');

@@ -112,7 +112,7 @@ export class ClothingPanel {
         const vsconfig = vscode.workspace.getConfiguration('swgForge');
         const treWorking = path.join(workspaceRoot, vsconfig.get<string>('tre.workingPath', 'tre/working'));
         const treInfinity = path.join(workspaceRoot, vsconfig.get<string>('tre.referencePath', 'tre/infinity'));
-        const scriptsPath = path.join(workspaceRoot, vsconfig.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts'));
+        const scriptsPath = path.join(workspaceRoot, vsconfig.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts'));
         const customScriptsPath = path.join(scriptsPath, vsconfig.get<string>('customScriptsFolder', 'custom_scripts'));
 
         // Find reference IFF

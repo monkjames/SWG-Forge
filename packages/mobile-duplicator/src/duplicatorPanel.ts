@@ -73,7 +73,7 @@ export class DuplicatorPanel {
                 return;
             }
             const config = vscode.workspace.getConfiguration('swgForge');
-            const scriptsPath = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts'));
+            const scriptsPath = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts'));
             const customScriptsPath = path.join(scriptsPath, config.get<string>('customScriptsFolder', 'custom_scripts'));
             const treWorking = path.join(workspaceRoot, config.get<string>('tre.workingPath', 'tre/working'));
             const treInfinity = path.join(workspaceRoot, config.get<string>('tre.referencePath', 'tre/infinity'));
@@ -141,7 +141,7 @@ export class DuplicatorPanel {
         if (!workspaceRoot) return;
 
         const config = vscode.workspace.getConfiguration('swgForge');
-        const scriptsPath = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts'));
+        const scriptsPath = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts'));
         const customScriptsPath = path.join(scriptsPath, config.get<string>('customScriptsFolder', 'custom_scripts'));
         const treWorking = path.join(workspaceRoot, config.get<string>('tre.workingPath', 'tre/working'));
         const treInfinity = path.join(workspaceRoot, config.get<string>('tre.referencePath', 'tre/infinity'));
@@ -326,7 +326,7 @@ export class DuplicatorPanel {
             }
 
             const config = vscode.workspace.getConfiguration('swgForge');
-            const scriptsPath = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts'));
+            const scriptsPath = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts'));
             const customScriptsPath = path.join(scriptsPath, config.get<string>('customScriptsFolder', 'custom_scripts'));
             const treWorking = path.join(workspaceRoot, config.get<string>('tre.workingPath', 'tre/working'));
             const treInfinity = path.join(workspaceRoot, config.get<string>('tre.referencePath', 'tre/infinity'));

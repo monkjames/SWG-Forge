@@ -276,7 +276,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
     private async _generateClientConfig(workspaceFolder: string, outputDir: string): Promise<void> {
         try {
             // Generate swgemu_live.cfg from config-local.lua (source of truth)
-            const configLuaPath = path.join(workspaceFolder, 'infinity4.0.0/MMOCoreORB/bin/conf/config-local.lua');
+            const configLuaPath = path.join(workspaceFolder, 'infinity_wicked/MMOCoreORB/bin/conf/config-local.lua');
             const destCfgPath = path.join(outputDir, 'swgemu_live.cfg');
 
             if (!fs.existsSync(configLuaPath)) {
@@ -402,7 +402,7 @@ export class TREBuilderProvider implements vscode.WebviewViewProvider {
 
     private _createValidator(workspaceFolder: string): Validator {
         const forgeConfig = vscode.workspace.getConfiguration('swgForge');
-        const scriptsPath = forgeConfig.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts');
+        const scriptsPath = forgeConfig.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts');
         const customScriptsFolder = forgeConfig.get<string>('customScriptsFolder', 'custom_scripts');
         return new Validator(workspaceFolder, scriptsPath, customScriptsFolder);
     }

@@ -55,7 +55,7 @@ export function updateSlotDescriptor(
     workspaceRoot: string,
     sharedVarName: string,
 ): { filePath: string; updated: boolean } {
-    const scriptsBase = path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts');
+    const scriptsBase = path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts');
     const searchPaths = [
         path.join(scriptsBase, 'object/mobile/objects.lua'),
         path.join(scriptsBase, 'custom_scripts/object/mobile/objects.lua'),
@@ -125,7 +125,7 @@ export function addMountSpeedData(
 ): void {
     const filePath = path.join(
         workspaceRoot,
-        'infinity4.0.0/MMOCoreORB/bin/scripts/managers/pet_manager.lua'
+        'infinity_wicked/MMOCoreORB/bin/scripts/managers/pet_manager.lua'
     );
     let content = fs.readFileSync(filePath, 'utf-8');
 

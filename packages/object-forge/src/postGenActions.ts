@@ -33,7 +33,7 @@ interface Paths {
 function getPaths(workspace: string): Paths {
     return {
         workspace,
-        scripts: path.join(workspace, 'infinity4.0.0/MMOCoreORB/bin/scripts'),
+        scripts: path.join(workspace, 'infinity_wicked/MMOCoreORB/bin/scripts'),
         treWorking: path.join(workspace, 'tre/working'),
         treVanilla: path.join(workspace, 'tre/vanilla'),
         treInfinity: path.join(workspace, 'tre/infinity'),

@@ -367,7 +367,7 @@ export function getMountSpeedData(workspaceRoot: string, appearanceName: string)
     runSpeed: number; gallopMultiplier: number; gallopDuration: number; gallopCooldown: number;
 } | null {
     try {
-        const filePath = path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/managers/pet_manager.lua');
+        const filePath = path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/managers/pet_manager.lua');
         const content = fs.readFileSync(filePath, 'utf-8');
         // Match: {"appearance/foo.sat", 17, 1.33, 300, 600}
         const escaped = appearanceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

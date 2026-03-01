@@ -271,7 +271,7 @@ export function duplicateArmorSet(
     config: DuplicateConfig,
     onProgress?: (result: DuplicateStepResult) => void
 ): DuplicateResult {
-    const scriptsBase = path.join(workspace, 'infinity4.0.0/MMOCoreORB/bin/scripts');
+    const scriptsBase = path.join(workspace, 'infinity_wicked/MMOCoreORB/bin/scripts');
     const allSteps: DuplicateStepResult[] = [];
     const allErrors: string[] = [];
     let totalFiles = 0;

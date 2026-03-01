@@ -41,7 +41,7 @@ export function findObjectTemplateInfo(workspaceRoot: string, objectIffPath: str
     const sharedVarName = dirPart.replace(/\//g, '_') + '_shared_' + filePart;
 
     // Search in both vanilla and custom_scripts objects.lua
-    const scriptsBase = path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts');
+    const scriptsBase = path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts');
     const searchPaths = [
         path.join(scriptsBase, 'object/mobile/objects.lua'),
         path.join(scriptsBase, 'custom_scripts/object/mobile/objects.lua'),

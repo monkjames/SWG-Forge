@@ -40,8 +40,8 @@ export function getForgeConfig(): SWGForgePaths | null {
 
     const config = vscode.workspace.getConfiguration('swgForge');
 
-    const serverScripts = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts'));
-    const serverConf = path.join(workspaceRoot, config.get<string>('serverConfPath', 'infinity4.0.0/MMOCoreORB/bin/conf'));
+    const serverScripts = path.join(workspaceRoot, config.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts'));
+    const serverConf = path.join(workspaceRoot, config.get<string>('serverConfPath', 'infinity_wicked/MMOCoreORB/bin/conf'));
     const customScriptsFolder = config.get<string>('customScriptsFolder', 'custom_scripts');
     const customScripts = customScriptsFolder
         ? path.join(serverScripts, customScriptsFolder)

@@ -32,12 +32,12 @@
             "properties": {
                 "swgForge.serverScriptsPath": {
                     "type": "string",
-                    "default": "infinity4.0.0/MMOCoreORB/bin/scripts",
-                    "markdownDescription": "Path to server Lua scripts directory, relative to workspace root.\n\nThis folder contains `object/`, `managers/`, and `custom_scripts/`.\n\n**Examples:**\n- `infinity4.0.0/MMOCoreORB/bin/scripts` (Infinity)\n- `Core3/MMOCoreORB/bin/scripts` (standard SWGEmu)"
+                    "default": "infinity_wicked/MMOCoreORB/bin/scripts",
+                    "markdownDescription": "Path to server Lua scripts directory, relative to workspace root.\n\nThis folder contains `object/`, `managers/`, and `custom_scripts/`.\n\n**Examples:**\n- `infinity_wicked/MMOCoreORB/bin/scripts` (Infinity active dev)\n- `Core3/MMOCoreORB/bin/scripts` (standard SWGEmu)"
                 },
                 "swgForge.serverConfPath": {
                     "type": "string",
-                    "default": "infinity4.0.0/MMOCoreORB/bin/conf",
+                    "default": "infinity_wicked/MMOCoreORB/bin/conf",
                     "markdownDescription": "Path to server configuration directory, relative to workspace root.\n\nContains `config-local.lua` and other server config files."
                 },
                 "swgForge.customScriptsFolder": {

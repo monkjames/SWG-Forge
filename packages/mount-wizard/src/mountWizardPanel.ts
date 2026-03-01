@@ -248,7 +248,7 @@ export class MountWizardPanel {
         }
 
         // Mount speed data
-        const petManagerPath = path.join(this._workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/managers/pet_manager.lua');
+        const petManagerPath = path.join(this._workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/managers/pet_manager.lua');
         try {
             const pmContent = require('fs').readFileSync(petManagerPath, 'utf-8');
             const inSpeedData = a ? pmContent.includes(`"${a.appearanceFilename}"`) : false;
@@ -368,7 +368,7 @@ export class MountWizardPanel {
 
         // Pet manager
         changes.push({
-            filePath: path.join(this._workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/managers/pet_manager.lua'),
+            filePath: path.join(this._workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/managers/pet_manager.lua'),
             displayPath: 'managers/pet_manager.lua',
             changeType: 'modify',
             description: `mountSpeedData: speed=${config.runSpeed}, gallop=${config.gallopMultiplier}`,

@@ -714,8 +714,8 @@ export class SchematicLoader {
         let relativePath = match[1].replace(/shared_/, '');
 
         const candidates = [
-            path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/custom_scripts/object/draft_schematic', relativePath + '.lua'),
-            path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/object/draft_schematic', relativePath + '.lua'),
+            path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/custom_scripts/object/draft_schematic', relativePath + '.lua'),
+            path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/object/draft_schematic', relativePath + '.lua'),
         ];
 
         for (const candidate of candidates) {
@@ -789,8 +789,8 @@ export class SchematicLoader {
         const relativePath = match[1].replace(/shared_/g, '');
 
         const candidates = [
-            path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/custom_scripts/object', relativePath + '.lua'),
-            path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/object', relativePath + '.lua'),
+            path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/custom_scripts/object', relativePath + '.lua'),
+            path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/object', relativePath + '.lua'),
         ];
 
         for (const candidate of candidates) {

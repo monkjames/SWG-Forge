@@ -111,8 +111,8 @@ class IFFEditorDocument implements vscode.CustomDocument {
             if (templateMatch) {
                 const relativePath = templateMatch[1].replace(/^shared_|shared_/g, '');
                 const possiblePaths = [
-                    path.join(this.workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/custom_scripts/object', relativePath + '.lua'),
-                    path.join(this.workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/object', relativePath + '.lua'),
+                    path.join(this.workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/custom_scripts/object', relativePath + '.lua'),
+                    path.join(this.workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/object', relativePath + '.lua'),
                 ];
 
                 for (const p of possiblePaths) {

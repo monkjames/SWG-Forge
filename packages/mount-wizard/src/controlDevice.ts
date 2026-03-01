@@ -90,7 +90,7 @@ export function createControlDevice(
     newAppearanceFilename: string,
 ): { createdFiles: string[]; modifiedFiles: string[] } {
     const paths = getPathsForType(mountType);
-    const scriptsBase = path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts');
+    const scriptsBase = path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts');
     const createdFiles: string[] = [];
     const modifiedFiles: string[] = [];
 

@@ -18,7 +18,7 @@ export function getResolvedPaths(): ResolvedPaths | null {
     if (!wsRoot) { return null; }
 
     const forge = vscode.workspace.getConfiguration('swgForge');
-    const scriptsRel = forge.get<string>('serverScriptsPath', 'infinity4.0.0/MMOCoreORB/bin/scripts')!;
+    const scriptsRel = forge.get<string>('serverScriptsPath', 'infinity_wicked/MMOCoreORB/bin/scripts')!;
     const csFolder = forge.get<string>('customScriptsFolder', 'custom_scripts')!;
 
     return {

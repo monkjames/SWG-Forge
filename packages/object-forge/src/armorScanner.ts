@@ -65,7 +65,7 @@ function deriveArmorName(luaFiles: string[]): string | null {
  */
 export function scanArmorSets(workspace: string): ArmorSetInfo[] {
     const results: ArmorSetInfo[] = [];
-    const scriptsBase = path.join(workspace, 'infinity4.0.0/MMOCoreORB/bin/scripts');
+    const scriptsBase = path.join(workspace, 'infinity_wicked/MMOCoreORB/bin/scripts');
 
     const scanPaths: { dir: string; source: 'custom' | 'vanilla' }[] = [
         { dir: path.join(scriptsBase, 'custom_scripts/object/tangible/wearables/armor'), source: 'custom' },

@@ -193,7 +193,7 @@ export class ForgePanel {
             const result = generateArmorSet(armorConfig);
             this._lastGenerated = result;
 
-            const scriptsBase = path.join(ws, 'infinity4.0.0/MMOCoreORB/bin/scripts');
+            const scriptsBase = path.join(ws, 'infinity_wicked/MMOCoreORB/bin/scripts');
 
             const allFiles = [
                 ...result.armorPieces.map(f => ({ path: f.path, content: f.content })),

@@ -338,7 +338,7 @@ export function isDraftSchematic(filePath: string): boolean {
 export function findLuaFile(iffPath: string, workspaceRoot: string): string | null {
     // Convert IFF path to Lua path
     // IFF: tre/working/object/draft_schematic/weapon/shared_pistol_westar31b_schematic.iff
-    // Lua: infinity4.0.0/.../custom_scripts/object/draft_schematic/weapon/pistol_westar31b_schematic.lua
+    // Lua: infinity_wicked/.../custom_scripts/object/draft_schematic/weapon/pistol_westar31b_schematic.lua
 
     const normalized = iffPath.replace(/\\/g, '/');
 
@@ -354,9 +354,9 @@ export function findLuaFile(iffPath: string, workspaceRoot: string): string | nu
     // Build possible Lua paths
     const luaPaths = [
         // Custom scripts location
-        path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/custom_scripts/object/draft_schematic', relativePath + '.lua'),
+        path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/custom_scripts/object/draft_schematic', relativePath + '.lua'),
         // Standard scripts location
-        path.join(workspaceRoot, 'infinity4.0.0/MMOCoreORB/bin/scripts/object/draft_schematic', relativePath + '.lua'),
+        path.join(workspaceRoot, 'infinity_wicked/MMOCoreORB/bin/scripts/object/draft_schematic', relativePath + '.lua'),
     ];
 
     for (const luaPath of luaPaths) {
