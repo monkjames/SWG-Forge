@@ -1,0 +1,42 @@
+{
+    "name": "datatable-editor",
+    "displayName": "SWG Datatable Editor",
+    "description": "Spreadsheet-style editor for SWG Datatable IFF files",
+    "version": "1.0.0",
+    "publisher": "swgemu",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "datatableEditor.datatableFile",
+                "displayName": "Datatable Editor",
+                "selector": [
+                    {
+                        "filenamePattern": "**/datatables/**/*.iff"
+                    }
+                ],
+                "priority": "default"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.74.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@swgemu/core": "file:../core"
+    }
+}
